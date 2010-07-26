@@ -47,6 +47,28 @@ public class Hello extends (package java.lang).Object implements (package com.go
   }
 }
 """
+    val output = parsers.classDef(input)
+    assertTrue {
+      output match {
+        case _: ClassDef => true
+        case _ => false
+      }
+    }
+  }
+
+  @Test
+  def helloInner {
+    val input = """package com.google.gwt.sample.jribble.client;
+public final class Hello$$anon$1 extends (package java.lang).Object implements (package com.google.gwt.event.dom.client).ClickHandler {
+
+  public void onClick((package com.google.gwt.event.dom.client).ClickEvent event) {
+    (package com.google.gwt.user.client).Window.alert("Hello, AJAX");
+  }
+
+  public Hello$$anon$1((package com.google.gwt.sample.jribble.client).Hello $outer) {
+    this.super();
+  }
+}"""
 
     val output = parsers.classDef(input)
     assertTrue {

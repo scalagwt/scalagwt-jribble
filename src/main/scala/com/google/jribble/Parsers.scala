@@ -80,7 +80,7 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
   def typ: Parser[Type] = array | primitive | classRef
 
   def paramsDef: Parser[List[ParamDef]] = {
-    val paramDef: Parser[ParamDef] = ((typ <~ ws) ~ ident) ^^ { case t ~ i => ParamDef(i, t) }
+    val paramDef: Parser[ParamDef] = ((typ <~ ws) ~ name) ^^ { case t ~ i => ParamDef(i, t) }
     val noParams: Parser[List[ParamDef]] = "()" ^^^ List()
     val atLeastOneParam = ("(" ~> paramDef ~ (("," ~> ws ~> paramDef)*) <~ ")") ^^ {
       case x ~ xs => x :: xs
