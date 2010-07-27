@@ -24,14 +24,18 @@ case class ClassDef(pkg: Package, modifs: Set[String], name: String, ext: Option
 
 case class ParamDef(name: String, typ: Type) extends AST
 
-case class Constructor(name: String, params: List[ParamDef], body: List[Statement]) extends AST
-case class MethodDef(returnType: Type, name: String, params: List[ParamDef], body: List[Statement]) extends AST
+case class Constructor(name: String, params: List[ParamDef], body: List[ConstructorStatement]) extends AST
+case class MethodDef(returnType: Type, name: String, params: List[ParamDef], body: List[MethodStatement]) extends AST
 
 sealed abstract class Statement extends AST
-case class VarDef(typ: Type, name: String, value: Expression) extends Statement
-case class Assignment(name: String, value: Expression) extends Statement
+sealed trait ConstructorStatement extends Statement
+sealed abstract class MethodStatement extends Statement with ConstructorStatement
+case class VarDef(typ: Type, name: String, value: Expression) extends MethodStatement
+case class Assignment(name: String, value: Expression) extends MethodStatement
 
-sealed abstract class Expression extends Statement
+case class SuperConstructorCall(params: List[Expression]) extends ConstructorStatement
+
+sealed abstract class Expression extends MethodStatement
 case class Literal[T](value: T) extends Expression
 case class VarRef(name: String) extends Expression
 case class NewCall(classRef: ClassRef, params: List[Expression]) extends Expression

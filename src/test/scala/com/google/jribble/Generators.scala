@@ -68,14 +68,19 @@ object Generators {
   def varDef: Gen[VarDef] = for (t <- typ; n <- identifier; v <- expression) yield VarDef(t, n, v)
   def assignment: Gen[Assignment] = for (n <- identifier; v <- expression) yield Assignment(n, v)
 
-  def statement: Gen[Statement] = Gen.oneOf(varDef, assignment, expression)
-  def statements: Gen[List[Statement]] = Gen.listOf(statement)
+  def methodStatement: Gen[MethodStatement] = Gen.oneOf(varDef, assignment, expression)
+  def methodStatements: Gen[List[MethodStatement]] = Gen.listOf(methodStatement)
 
-  def constructorBody = statements
+  def constructorSuperCall: Gen[SuperConstructorCall] = for (p <- params) yield SuperConstructorCall(p)
+  //we shuffle the list because in jribble there is no requirement that super constructor call is
+  def constructorBody: Gen[List[ConstructorStatement]] = for {
+      s <- Gen.resize(1, Gen.listOf(constructorSuperCall))
+      ss <- methodStatements
+    } yield scala.util.Random.shuffle(s ::: ss)
   def constructor: Gen[Constructor] =
     for (n <- identifier; p <- paramsDef; b <- constructorBody) yield Constructor(n, p, b)
 
-  def methodBody = statements
+  def methodBody = methodStatements
   def returnType = typ | Void
   def methodDef: Gen[MethodDef] =
     for (t <- returnType; n <- identifier; p <- paramsDef; b <- methodBody) yield MethodDef(t, n, p, b)
@@ -115,8 +120,9 @@ object Generators {
   implicit val arbExpression = Arbitrary(expression)
   implicit val arbVarDef = Arbitrary(varDef)
   implicit val arbAssignment = Arbitrary(assignment)
-  implicit val arbStatement = Arbitrary(statement)
-  implicit val arbStatements = Arbitrary(statements)
+  implicit val arbMethodStatement = Arbitrary(methodStatement)
+  implicit val arbMethodStatements = Arbitrary(methodStatements)
+  implicit val arbConstructorStatements = Arbitrary(constructorBody) 
   implicit val arbConstructor = Arbitrary(constructor)
   implicit val arbMethodDef = Arbitrary(methodDef)
   implicit val arbClassDef = Arbitrary(classDef)

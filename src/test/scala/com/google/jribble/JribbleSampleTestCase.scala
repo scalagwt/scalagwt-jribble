@@ -43,7 +43,7 @@ public class Hello extends (package java.lang).Object implements (package com.go
   }
 
   public Hello() {
-    this.super();
+    super();
   }
 }
 """
@@ -66,7 +66,7 @@ public final class Hello$$anon$1 extends (package java.lang).Object implements (
   }
 
   public Hello$$anon$1((package com.google.gwt.sample.jribble.client).Hello $outer) {
-    this.super();
+    super();
   }
 }"""
 

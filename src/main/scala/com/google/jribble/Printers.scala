@@ -95,26 +95,35 @@ trait Printers {
     }
   }
 
+  implicit object SuperConstructorCall extends Printer[SuperConstructorCall] {
+    def apply(x: SuperConstructorCall) = "super" + ParamsPrinter(x.params)
+  }
+
   implicit object StatementPrinter extends Printer[Statement] {
     def apply(x: Statement) = (x match {
       case x: VarDef => VarDefPrinter(x)
       case x: Assignment => AssignmentPrinter(x)
       case x: Expression => ExpressionPrinter(x)
+      case x: SuperConstructorCall => SuperConstructorCall(x)
     }) + ";"
   }
 
-  implicit object StatementsPrinter extends Printer[List[Statement]] {
-    def apply(xs: List[Statement]) = xs.map(StatementPrinter).map(_ + "\n").mkString("{\n", "", "}\n")
+  implicit object MethodBodyPrinter extends Printer[List[MethodStatement]] {
+    def apply(xs: List[MethodStatement]) = xs.map(StatementPrinter).map(_ + "\n").mkString("{\n", "", "}\n")
+  }
+
+  implicit object ConstructorBodyPrinter extends Printer[List[ConstructorStatement]] {
+    def apply(xs: List[ConstructorStatement]) = xs.map(StatementPrinter).map(_ + "\n").mkString("{\n", "", "}\n")
   }
 
   implicit object ConstructorPrinter extends Printer[Constructor] {
     //todo (grek): hard-coded public
-    def apply(x: Constructor) = "public " + x.name + ParamsDefPrinter(x.params) + " " + StatementsPrinter(x.body)
+    def apply(x: Constructor) = "public " + x.name + ParamsDefPrinter(x.params) + " " + ConstructorBodyPrinter(x.body)
   }
 
   implicit object MethodDefPrinter extends Printer[MethodDef] {
     def apply(x: MethodDef) =
-      "public " + TypePrinter(x.returnType) + " " + x.name + ParamsDefPrinter(x.params) + " " + StatementsPrinter(x.body)
+      "public " + TypePrinter(x.returnType) + " " + x.name + ParamsDefPrinter(x.params) + " " + MethodBodyPrinter(x.body)
   }
 
   implicit object ClassDefPrinter extends Printer[ClassDef] {

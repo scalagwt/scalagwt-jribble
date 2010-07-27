@@ -88,12 +88,13 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     noParams | atLeastOneParam
   }
 
-  def statements: Parser[List[Statement]] =
+  def statements[T <: Statement](statement: Parser[T]): Parser[List[T]] =
     (("{" ~ LF ~ "}") ^^^ List()) | ("{" ~> (((ignoreWsLF ~> statement) <~ ignoreWsLF)+) <~ "}")
 
-  def methodBody: Parser[List[Statement]] = statements
+  def methodBody: Parser[List[MethodStatement]] = statements(methodStatement)
 
-  def constructorBody: Parser[List[Statement]] = statements
+  def superConstructorCallStatement: Parser[SuperConstructorCall] = ("super" ~> params <~ ";") ^^ (SuperConstructorCall)
+  def constructorBody: Parser[List[ConstructorStatement]] = statements(superConstructorCallStatement | methodStatement)
 
   //todo (grek): hard-coded "public"
   def constructor: Parser[Constructor] = ("public" ~> ws ~> name ~ paramsDef) ~! (ws ~> constructorBody) ^^ {
@@ -112,7 +113,7 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     case typ ~ ident ~ expression => VarDef(typ, ident, expression)
   }
 
-  def statement: Parser[Statement] = (varDef | assignment | expression) <~ ";"
+  def methodStatement: Parser[MethodStatement] = (varDef | assignment | expression) <~ ";"
 
   def expression: Parser[Expression] = {
     val staticCall: Parser[StaticMethodCall] = (classRef ~ methodCall) ^^ {
