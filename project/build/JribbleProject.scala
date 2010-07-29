@@ -16,7 +16,7 @@
 
 import sbt._
 
-class ScalaGwtJribbleProject(info: ProjectInfo) extends DefaultProject(info) with IdeaProject {
+class JribbleProject(info: ProjectInfo) extends DefaultProject(info) with IdeaProject {
   val scalaTools = "scala-tools-snapshots" at "http://scala-tools.org/repo-snapshots"
   val scalaCheck = "org.scala-tools.testing" % "scalacheck_2.8.0" % "1.8-SNAPSHOT" % "test" withSources()
 
