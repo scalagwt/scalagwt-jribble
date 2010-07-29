@@ -53,6 +53,8 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
 
   property("literal") = checkIdentityEqual(printers.LiteralPrinter andThen liftParser(parsers.literal))
 
+  property("signature") = checkIdentityEqual(printers.SignaturePrinter andThen parsers.signature)
+
   property("newCall") = checkIdentityEqual(printers.NewCallPrinter andThen parsers.newCall)
 
   //todo (grek): possibly tests for methodCalls and staticMethodCalls?

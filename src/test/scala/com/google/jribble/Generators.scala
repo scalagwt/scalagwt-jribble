@@ -49,11 +49,13 @@ object Generators {
             arbitrary[Float] | arbitrary[Double] | **/ arbitrary[Boolean] | Gen.alphaNumChar)
     for (v <- literalValue) yield Literal(v)
   }
-  def newCall: Gen[NewCall] = for (c <- classRef; p <- params) yield NewCall(c, p)
+  def signature: Gen[Signature] =
+    for (r <- returnType; paramTypes <- Gen.listOf(typ)) yield Signature(r, paramTypes)
+  def newCall: Gen[NewCall] = for (c <- classRef; s <- signature; p <- params) yield NewCall(c, s, p)
   def methodCall: Gen[MethodCall] =
-    for (on <- expression; n <- identifier; p <- params) yield MethodCall(on, n, p)
+    for (on <- expression; s <- signature; n <- identifier; p <- params) yield MethodCall(on, s, n, p)
   def staticMethodCall: Gen[StaticMethodCall] =
-    for (c <- classRef; n <- identifier; p <- params) yield StaticMethodCall(c, n, p)
+    for (c <- classRef; s <- signature; n <- identifier; p <- params) yield StaticMethodCall(c, s, n, p)
 
   def expression: Gen[Expression] =
     {
@@ -71,7 +73,8 @@ object Generators {
   def methodStatement: Gen[MethodStatement] = Gen.oneOf(varDef, assignment, expression)
   def methodStatements: Gen[List[MethodStatement]] = Gen.listOf(methodStatement)
 
-  def constructorSuperCall: Gen[SuperConstructorCall] = for (p <- params) yield SuperConstructorCall(p)
+  def constructorSuperCall: Gen[SuperConstructorCall] =
+    for (s <- signature; p <- params) yield SuperConstructorCall(s, p)
   //we shuffle the list because in jribble there is no requirement that super constructor call is
   def constructorBody: Gen[List[ConstructorStatement]] = for {
       s <- Gen.resize(1, Gen.listOf(constructorSuperCall))
@@ -114,6 +117,7 @@ object Generators {
   implicit val arbType = Arbitrary(typ)
   implicit val arbParamsDef = Arbitrary(paramsDef)
   implicit val arbLiteral = Arbitrary(literal)
+  implicit val arbSignature = Arbitrary(signature)
   implicit val arbNewCall = Arbitrary(newCall)
   implicit val arbMethodCall = Arbitrary(methodCall)
   implicit val arbStaticMethodCall = Arbitrary(staticMethodCall)

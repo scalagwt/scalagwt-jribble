@@ -73,16 +73,23 @@ trait Printers {
     def apply(xs: List[Expression]) = xs.map(ExpressionPrinter).mkString("(", ", ", ")")
   }
 
+  implicit object SignaturePrinter extends Printer[Signature] {
+    def apply(x: Signature) = (x.returnType :: x.paramTypes).map(TypePrinter).mkString("<", ", ", ">")
+  }
+
   implicit object NewCallPrinter extends Printer[NewCall] {
-    def apply(x: NewCall) = "new " + ClassRefPrinter(x.classRef) + ParamsPrinter(x.params)
+    def apply(x: NewCall) = "new " + ClassRefPrinter(x.classRef) + SignaturePrinter(x.signature) +
+            ParamsPrinter(x.params)
   }
 
   implicit object MethodCallPrinter extends Printer[MethodCall] {
-    def apply(x: MethodCall) = ExpressionPrinter(x.on) + "." + x.name + ParamsPrinter(x.params)
+    def apply(x: MethodCall) = ExpressionPrinter(x.on) + "." + x.name + SignaturePrinter(x.signature) +
+            ParamsPrinter(x.params)
   }
 
   implicit object StaticMethodCallPrinter extends Printer[StaticMethodCall] {
-    def apply(x: StaticMethodCall) = ClassRefPrinter(x.classRef) + "." + x.name + ParamsPrinter(x.params)
+    def apply(x: StaticMethodCall) = ClassRefPrinter(x.classRef) + "." + x.name + SignaturePrinter(x.signature) +
+            ParamsPrinter(x.params)
   }
 
   implicit object ExpressionPrinter extends Printer[Expression] {

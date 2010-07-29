@@ -33,14 +33,16 @@ sealed abstract class MethodStatement extends Statement with ConstructorStatemen
 case class VarDef(typ: Type, name: String, value: Expression) extends MethodStatement
 case class Assignment(name: String, value: Expression) extends MethodStatement
 
-case class SuperConstructorCall(params: List[Expression]) extends ConstructorStatement
+case class SuperConstructorCall(signature: Signature, params: List[Expression]) extends ConstructorStatement
 
 sealed abstract class Expression extends MethodStatement
 case class Literal[T](value: T) extends Expression
 case class VarRef(name: String) extends Expression
-case class NewCall(classRef: ClassRef, params: List[Expression]) extends Expression
-case class MethodCall(on: Expression, name: String, params: List[Expression]) extends Expression
-case class StaticMethodCall(classRef: ClassRef, name: String, params: List[Expression]) extends Expression
+case class Signature(returnType: Type, paramTypes: List[Type]) extends AST
+case class NewCall(classRef: ClassRef, signature: Signature, params: List[Expression]) extends Expression
+case class MethodCall(on: Expression, signature: Signature, name: String, params: List[Expression]) extends Expression
+case class StaticMethodCall(classRef: ClassRef, signature: Signature, name: String, params: List[Expression])
+        extends Expression
 
 sealed abstract class Type extends AST
 case class ClassRef(pkg: Package, name: String) extends Type

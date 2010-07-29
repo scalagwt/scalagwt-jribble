@@ -38,12 +38,12 @@ class JribbleSampleTestCase {
 public class Hello extends (package java.lang).Object implements (package com.google.gwt.core.client).EntryPoint, (package scala).ScalaObject {
 
   public void onModuleLoad() {
-    (package com.google.gwt.user.client.ui).Button b = new (package com.google.gwt.user.client.ui).Button("Click me", new (package com.google.gwt.sample.jribble.client).Hello$$anon$1(this));
-    (package com.google.gwt.user.client.ui).RootPanel.get().add(b);
+    (package com.google.gwt.user.client.ui).Button b = new (package com.google.gwt.user.client.ui).Button<(package com.google.gwt.user.client.ui).Button, (package java.lang).String, (package com.google.gwt.event.dom.client).ClickHandler>("Click me", new (package com.google.gwt.sample.jribble.client).Hello$$anon$1<(package com.google.gwt.sample.jribble.client).Hello$$anon$1, (package com.google.gwt.sample.jribble.client).Hello>(this));
+    (package com.google.gwt.user.client.ui).RootPanel.get<(package com.google.gwt.user.client.ui).RootPanel>().add<void, (package com.google.gwt.user.client.ui).Widget>(b);
   }
 
   public Hello() {
-    super();
+    super<(package java.lang).Object>();
   }
 }
 """
@@ -62,13 +62,14 @@ public class Hello extends (package java.lang).Object implements (package com.go
 public final class Hello$$anon$1 extends (package java.lang).Object implements (package com.google.gwt.event.dom.client).ClickHandler {
 
   public void onClick((package com.google.gwt.event.dom.client).ClickEvent event) {
-    (package com.google.gwt.user.client).Window.alert("Hello, AJAX");
+    (package com.google.gwt.user.client).Window.alert<void, (package java.lang).String>("Hello, AJAX");
   }
 
   public Hello$$anon$1((package com.google.gwt.sample.jribble.client).Hello $outer) {
-    super();
+    super<(package java.lang).Object>();
   }
-}"""
+}
+"""
 
     val output = parsers.classDef(input)
     assertTrue {
