@@ -121,8 +121,9 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     val staticCall: Parser[StaticMethodCall] = (classRef ~ methodCall) ^^ {
       case classRef ~ (name ~ signature ~ params) => StaticMethodCall(classRef, signature, name, params)
     }
+    val thisRef: Parser[Expression] = "this" ^^^ ThisRef
     val varRef: Parser[VarRef] = ident ^^ (VarRef)
-    ((literal | newCall | staticCall | varRef) ~ (methodCall *)) ^^ {
+    ((literal | newCall | staticCall | thisRef | varRef) ~ (methodCall *)) ^^ {
       case on ~ calls => {
         //todo (grek): this fragment even if involves simple folding of calls might be slightly dense and might deserve
         //todo (grek): a few words of more elaborate explanation. Must ask others for opinion
@@ -163,24 +164,12 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
   }
 
   //todo (grek): implement parsing of all literals, recheck what we already have and make it less hacky
-  def literal: Parser[Literal[_]] = {
+  def literal: Parser[Literal] = {
     val stringChar = chrExcept('\n', '\"')
-    val stringLiteral: Parser[String] = ('\"' ~> (stringChar *) <~ '\"') ^^ (_ mkString)
-    val bool: Parser[Boolean] = ("false" | "true") ^^ (_ != "false")
-    val int: Parser[Int] = (("0" ^^^ 0): Parser[Int]) | ("-?[1..9][0..9]*".r ^^ (_.toInt))
-    val intCasted: Parser[Any] = int ^^ {
-      case x if (Byte.MinValue <= x && x <= Byte.MaxValue) => x.toByte
-      case x if (Short.MinValue <= x && x <= Short.MaxValue) => x.toShort
-      case x => x
-    }
-    val float: Parser[Float] = ((int <~ "f") ^^ (_.floatValue)) | (((int <~ ".") ~ int <~ "f") ^^ {
-      case x ~ y => (x.toString + "." + y.toString).toFloat
-    })
-    val double: Parser[Double] = ((int <~ "d") ^^ (_.doubleValue)) | (((int <~ ".") ~ int <~ "d") ^^ {
-      case x ~ y => (x.toString + "." + y.toString).toDouble
-    })
-    val char: Parser[Char] = "'" ~> chrExcept('\'') <~ "'"
-    (bool /**| intCasted | float | double**/ | char | stringLiteral) ^^ (Literal(_))
+    val stringLiteral: Parser[StringLiteral] = ('\"' ~> (stringChar *) <~ '\"') ^^ (x => StringLiteral(x mkString))
+    val bool: Parser[BooleanLiteral] = ("false" | "true") ^^ (x => BooleanLiteral(x != "false"))
+    val char: Parser[CharLiteral] = ("'" ~> chrExcept('\'') <~ "'") ^^ (CharLiteral)
+    bool | char | stringLiteral
   }
 
   import scala.util.parsing.input.CharSequenceReader.EofCh

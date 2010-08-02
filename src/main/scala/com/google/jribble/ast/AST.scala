@@ -36,11 +36,23 @@ case class Assignment(name: String, value: Expression) extends MethodStatement
 case class SuperConstructorCall(signature: Signature, params: List[Expression]) extends ConstructorStatement
 
 sealed abstract class Expression extends MethodStatement
-case class Literal[T](value: T) extends Expression
+
+sealed abstract class Literal extends Expression
+case class BooleanLiteral(v: Boolean) extends Literal
+case class CharLiteral(v: Char) extends Literal
+case class DoubleLiteral(v: Double) extends Literal
+case class FloatLiteral(v: Float) extends Literal
+case class IntLiteral(v: Int) extends Literal
+case class LongLiteral(v: Long) extends Literal
+case object NullLiteral extends Literal
+case class StringLiteral(v: String) extends Literal
+
 case class VarRef(name: String) extends Expression
 case class Signature(returnType: Type, paramTypes: List[Type]) extends AST
 case class NewCall(classRef: ClassRef, signature: Signature, params: List[Expression]) extends Expression
 case class MethodCall(on: Expression, signature: Signature, name: String, params: List[Expression]) extends Expression
+case object ThisRef extends Expression
+
 case class StaticMethodCall(classRef: ClassRef, signature: Signature, name: String, params: List[Expression])
         extends Expression
 

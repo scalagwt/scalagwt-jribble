@@ -43,12 +43,15 @@ object Generators {
   def params: Gen[List[Expression]] = Gen.resize(4, Gen.listOf(expression))
 
   //todo (grek): implement generation of all literals
-  def literal: Gen[Literal[_]] = {
+  def literal: Gen[Literal] = {
     import Arbitrary._
-    var literalValue: Gen[Any] = (/** arbitrary[Byte]| arbitrary[Short] | arbitrary[Int] | arbitrary[Long] |
-            arbitrary[Float] | arbitrary[Double] | **/ arbitrary[Boolean] | Gen.alphaNumChar)
-    for (v <- literalValue) yield Literal(v)
+    //todo (grek): once parsing of escaped is implemented we should switch to broader domain of strings
+    val stringLiteral = for (x <- Gen.listOf(Gen.alphaNumChar)) yield StringLiteral(x mkString)
+    val charLiteral = for (x <- arbitrary[Char]) yield CharLiteral(x)
+    val booleanLiteral = for (x <- arbitrary[Boolean]) yield BooleanLiteral(x)
+    stringLiteral | charLiteral | booleanLiteral
   }
+  def varRef = identifier.map(VarRef)
   def signature: Gen[Signature] =
     for (r <- returnType; paramTypes <- Gen.listOf(typ)) yield Signature(r, paramTypes)
   def newCall: Gen[NewCall] = for (c <- classRef; s <- signature; p <- params) yield NewCall(c, s, p)
@@ -60,7 +63,9 @@ object Generators {
   def expression: Gen[Expression] =
     {
       Gen.frequency(
-        (10, literal),
+        (5, literal),
+        (1, varRef),
+        (1, ThisRef),
         (1, Gen.lzy(newCall)),
         (1, Gen.lzy(methodCall)),
         (1, Gen.lzy(staticMethodCall))

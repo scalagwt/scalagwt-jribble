@@ -62,10 +62,12 @@ trait Printers {
   }
 
   //todo (grek): implement printing of literals
-  implicit object LiteralPrinter extends Printer[Literal[_]] {
-    def apply(x: Literal[_]) = x match {
-      case Literal(x: Char) => "'" + x + "'"
-      case Literal(x) => x.toString
+  implicit object LiteralPrinter extends Printer[Literal] {
+    def apply(x: Literal) = x match {
+      case CharLiteral(v) => "'" + x + "'"
+      //todo (grek): implement escaping
+      case StringLiteral(v) => "\"" + v + "\""
+      case _ => error("to be implemented")
     }
   }
 
@@ -94,7 +96,8 @@ trait Printers {
 
   implicit object ExpressionPrinter extends Printer[Expression] {
     def apply(x: Expression) = x match {
-      case x: Literal[_] => LiteralPrinter(x)
+      case x: Literal => LiteralPrinter(x)
+      case ThisRef => "this"
       case x: VarRef => x.name
       case x: NewCall => NewCallPrinter(x)
       case x: MethodCall => MethodCallPrinter(x)
