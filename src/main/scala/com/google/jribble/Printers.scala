@@ -27,8 +27,8 @@ trait Printers {
     def apply(x: Package) = "package " + x.name
   }
 
-  implicit object ClassRefPrinter extends Printer[ClassRef] {
-    def apply(x: ClassRef) = "(" + PackagePrinter(x.pkg) + ")." + x.name   
+  implicit object ClassNamePrinter extends Printer[ClassName] {
+    def apply(x: ClassName) = "(" + PackagePrinter(x.pkg) + ")." + x.name
   }
 
   implicit object PrimitivePrinter extends Printer[Primitive] {
@@ -41,7 +41,7 @@ trait Printers {
 
   implicit object TypePrinter extends Printer[Type] {
     def apply(x: Type) = x match {
-      case x: ClassRef => ClassRefPrinter(x)
+      case x: ClassName => ClassNamePrinter(x)
       case x: Primitive => PrimitivePrinter(x)
       case x: Array => ArrayPrinter(x)
       case Void => "void"
@@ -80,7 +80,7 @@ trait Printers {
   }
 
   implicit object NewCallPrinter extends Printer[NewCall] {
-    def apply(x: NewCall) = "new " + ClassRefPrinter(x.classRef) + SignaturePrinter(x.signature) +
+    def apply(x: NewCall) = "new " + ClassNamePrinter(x.classRef) + SignaturePrinter(x.signature) +
             ParamsPrinter(x.params)
   }
 
@@ -90,7 +90,7 @@ trait Printers {
   }
 
   implicit object StaticMethodCallPrinter extends Printer[StaticMethodCall] {
-    def apply(x: StaticMethodCall) = ClassRefPrinter(x.classRef) + "." + x.name + SignaturePrinter(x.signature) +
+    def apply(x: StaticMethodCall) = ClassNamePrinter(x.classRef) + "." + x.name + SignaturePrinter(x.signature) +
             ParamsPrinter(x.params)
   }
 
@@ -144,11 +144,11 @@ trait Printers {
       }).mkString("{\n", "\n", "}\n")
       val implements = x.implements match {
         case Nil => ""
-        case xs => xs.map(ClassRefPrinter).mkString("implements ", ", ", " ")
+        case xs => xs.map(ClassNamePrinter).mkString("implements ", ", ", " ")
       }
-      val ext = x.ext.map("extends " + ClassRefPrinter(_) + " ").getOrElse("")
+      val ext = x.ext.map("extends " + ClassNamePrinter(_) + " ").getOrElse("")
 
-      x.modifs.map(_ + " ").mkString + "class " + ClassRefPrinter(x.name) + " " + ext + implements + body
+      x.modifs.map(_ + " ").mkString + "class " + ClassNamePrinter(x.name) + " " + ext + implements + body
     }
   }
 

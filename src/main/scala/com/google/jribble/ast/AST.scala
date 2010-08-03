@@ -22,14 +22,14 @@ sealed abstract class AST
 
 case class Package(name: String) extends AST
 
-case class ClassDef(modifs: Set[String], name: ClassRef, ext: Option[ClassRef], implements: List[ClassRef],
+case class ClassDef(modifs: Set[String], name: ClassName, ext: Option[ClassName], implements: List[ClassName],
         body: List[Either[Constructor, MethodDef]]) extends AST {
 
   def jconstructors: JList[Constructor] = body collect { case Left(x) => x}
 
   def jmethodDefs: JList[MethodDef] = body collect { case Right(x) => x }
 
-  def jimplements: JList[ClassRef] = implements
+  def jimplements: JList[ClassName] = implements
 }
 
 case class ParamDef(name: String, typ: Type) extends AST
@@ -71,19 +71,19 @@ case object ThisRef extends Expression
 case class Signature(returnType: Type, paramTypes: List[Type]) extends AST {
   def jparamTypes: JList[Type] = paramTypes
 }
-case class NewCall(classRef: ClassRef, signature: Signature, params: List[Expression]) extends Expression {
+case class NewCall(classRef: ClassName, signature: Signature, params: List[Expression]) extends Expression {
   def jparams: JList[Expression] = params
 }
 case class MethodCall(on: Expression, signature: Signature, name: String, params: List[Expression]) extends Expression {
   def jparams: JList[Expression] = params
 }
-case class StaticMethodCall(classRef: ClassRef, signature: Signature, name: String, params: List[Expression])
+case class StaticMethodCall(classRef: ClassName, signature: Signature, name: String, params: List[Expression])
         extends Expression {
   def jparams: JList[Expression] = params
 }
 
 sealed abstract class Type extends AST
-case class ClassRef(pkg: Package, name: String) extends Type
+case class ClassName(pkg: Package, name: String) extends Type
 case class Primitive(name: String) extends Type
 case class Array(typ: Type) extends Type
 case object Void extends Type

@@ -43,20 +43,20 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
   }
 
   val classDef: Parser[ClassDef] =
-    ((classModifs <~ "class" <~ ws) ~! (classRef <~ ws) ~!
+    ((classModifs <~ "class" <~ ws) ~! (className <~ ws) ~!
             ((extendsDef <~ ws)?) ~!((implementsDef <~ ws)?) ~! classBody) ^^ {
       case modifs ~ classRef ~ ext ~ impl ~ body => ClassDef(modifs, classRef, ext, impl.getOrElse(Nil), body)
     }
 
   def name: Parser[String] = "[a-zA-Z$][a-zA-Z0-9_$]*".r
 
-  def classRef: Parser[ClassRef] = ("(" ~> packageCoord <~ ")") ~! (("." ~> name)) ^^ {
-    case x ~ y => ClassRef(x, y)
+  def className: Parser[ClassName] = ("(" ~> packageCoord <~ ")") ~! (("." ~> name)) ^^ {
+    case x ~ y => ClassName(x, y)
   }
 
-  def extendsDef: Parser[ClassRef] = "extends" ~> ws ~> classRef
+  def extendsDef: Parser[ClassName] = "extends" ~> ws ~> className
 
-  def implementsDef: Parser[List[ClassRef]] = "implements" ~> ws ~> classRef ~ (("," ~> ws ~> classRef)*) ^^ {
+  def implementsDef: Parser[List[ClassName]] = "implements" ~> ws ~> className ~ (("," ~> ws ~> className)*) ^^ {
     case x ~ xs => x :: xs
   }
 
@@ -69,13 +69,13 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
 
   def primitive: Parser[Primitive] =
     ("byte" | "short" | "int" | "long" | "float" | "double" | "boolean" | "char") ^^ (Primitive(_))
-  def array: Parser[Array] = ((primitive | classRef) ~ (literal("[]")+)) ^^ {
+  def array: Parser[Array] = ((primitive | className) ~ (literal("[]")+)) ^^ {
     case typ ~ xs => {
       def iterateTimes[T](f: T => T, v: T, n: Int): T = if (n <= 0) v else f(iterateTimes(f, v, n-1))
       Array(iterateTimes(Array: (Type => Type), typ, xs.length-1))
     }
   }
-  def typ: Parser[Type] = array | primitive | classRef
+  def typ: Parser[Type] = array | primitive | className
 
   def paramsDef: Parser[List[ParamDef]] = {
     val paramDef: Parser[ParamDef] = ((typ <~ ws) ~ name) ^^ { case t ~ i => ParamDef(i, t) }
@@ -116,7 +116,7 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
   def methodStatement: Parser[MethodStatement] = (varDef | assignment | expression) <~ ";"
 
   def expression: Parser[Expression] = {
-    val staticCall: Parser[StaticMethodCall] = (classRef ~ methodCall) ^^ {
+    val staticCall: Parser[StaticMethodCall] = (className ~ methodCall) ^^ {
       case classRef ~ (name ~ signature ~ params) => StaticMethodCall(classRef, signature, name, params)
     }
     val thisRef: Parser[Expression] = "this" ^^^ ThisRef
@@ -143,7 +143,7 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
 
   def methodCall: Parser[String ~ Signature ~ List[Expression]] = "." ~> name ~ signature ~ params
 
-  def newCall: Parser[NewCall] = ("new" ~> ws ~> classRef ~! signature ~! params) ^^ {
+  def newCall: Parser[NewCall] = ("new" ~> ws ~> className ~! signature ~! params) ^^ {
     case classRef ~ signature ~ params => NewCall(classRef, signature, params)
   }
 

@@ -26,14 +26,14 @@ object Generators {
   def pkg: Gen[Package] = for(x <- identifier; xs <- Gen.resize(2, Gen.listOf(identifier))) yield
     Package(x + (xs.map("." + _) mkString))
 
-  def classRef: Gen[ClassRef] = for(name <- identifier; p <- pkg) yield ClassRef(p, name)
+  def className: Gen[ClassName] = for(name <- identifier; p <- pkg) yield ClassName(p, name)
 
   def primitive: Gen[Primitive] =
     for (name <- Gen.oneOf("byte", "short", "int", "long", "float", "double", "boolean", "char")) yield Primitive(name)
 
   def array: Gen[Array] = for (t <- typ) yield Array(t)
 
-  def typ: Gen[Type] = Gen.oneOf(classRef, primitive, Gen.lzy(array))
+  def typ: Gen[Type] = Gen.oneOf(className, primitive, Gen.lzy(array))
 
   def paramsDef: Gen[List[ParamDef]] = {
     val paramDef: Gen[ParamDef] = for (n <- identifier; t <- typ) yield ParamDef(n, t)
@@ -54,11 +54,11 @@ object Generators {
   def varRef = identifier.map(VarRef)
   def signature: Gen[Signature] =
     for (r <- returnType; paramTypes <- Gen.listOf(typ)) yield Signature(r, paramTypes)
-  def newCall: Gen[NewCall] = for (c <- classRef; s <- signature; p <- params) yield NewCall(c, s, p)
+  def newCall: Gen[NewCall] = for (c <- className; s <- signature; p <- params) yield NewCall(c, s, p)
   def methodCall: Gen[MethodCall] =
     for (on <- expression; s <- signature; n <- identifier; p <- params) yield MethodCall(on, s, n, p)
   def staticMethodCall: Gen[StaticMethodCall] =
-    for (c <- classRef; s <- signature; n <- identifier; p <- params) yield StaticMethodCall(c, s, n, p)
+    for (c <- className; s <- signature; n <- identifier; p <- params) yield StaticMethodCall(c, s, n, p)
 
   def expression: Gen[Expression] =
     {
@@ -97,9 +97,9 @@ object Generators {
     val modif = Gen.oneOf("public", "final")
     Gen.resize(2, Gen.listOf(modif)).map(_.toSet)
   }
-  def extendsDef: Gen[Option[ClassRef]] = Arbitrary.arbitrary[Option[ClassRef]]
+  def extendsDef: Gen[Option[ClassName]] = Arbitrary.arbitrary[Option[ClassName]]
 
-  def implementsDef: Gen[List[ClassRef]] = Gen.resize(3, Gen.listOf(classRef))
+  def implementsDef: Gen[List[ClassName]] = Gen.resize(3, Gen.listOf(className))
 
   def classBody: Gen[List[Either[Constructor, MethodDef]]] = for {
     cs <- Gen.resize(3, Gen.listOf(constructor))
@@ -108,13 +108,13 @@ object Generators {
 
   def classDef: Gen[ClassDef] = for {
     m <- classModifiers
-    n <- classRef
+    n <- className
     e <- extendsDef
     i <- implementsDef
     b <- classBody
   } yield ClassDef(m, n, e, i, b)
 
-  implicit val arbClassRef = Arbitrary(classRef)
+  implicit val arbClassName = Arbitrary(className)
   implicit val arbPackage = Arbitrary(pkg)
   implicit val arbPrimitive = Arbitrary(primitive)
   implicit val arbArray = Arbitrary(array)
