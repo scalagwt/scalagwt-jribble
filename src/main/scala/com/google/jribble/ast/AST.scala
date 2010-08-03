@@ -15,17 +15,33 @@
  */
 package com.google.jribble.ast
 
+import scala.collection.JavaConversions._
+import java.util.{List => JList}
+
 sealed abstract class AST
 
 case class Package(name: String) extends AST
 
 case class ClassDef(pkg: Package, modifs: Set[String], name: String, ext: Option[ClassRef], implements: List[ClassRef],
-        body: List[Either[Constructor, MethodDef]]) extends AST
+        body: List[Either[Constructor, MethodDef]]) extends AST {
+
+  def jconstructors: JList[Constructor] = body collect { case Left(x) => x}
+
+  def jmethodDefs: JList[MethodDef] = body collect { case Right(x) => x }
+
+  def jimplements: JList[ClassRef] = implements
+}
 
 case class ParamDef(name: String, typ: Type) extends AST
 
-case class Constructor(name: String, params: List[ParamDef], body: List[ConstructorStatement]) extends AST
-case class MethodDef(returnType: Type, name: String, params: List[ParamDef], body: List[MethodStatement]) extends AST
+case class Constructor(name: String, params: List[ParamDef], body: List[ConstructorStatement]) extends AST {
+  def jparams: JList[ParamDef] = params
+  def jbody: JList[ConstructorStatement] = body
+}
+case class MethodDef(returnType: Type, name: String, params: List[ParamDef], body: List[MethodStatement]) extends AST {
+  def jparams: JList[ParamDef] = params
+  def jbody: JList[MethodStatement] = body
+}
 
 sealed abstract class Statement extends AST
 sealed trait ConstructorStatement extends Statement
@@ -33,7 +49,9 @@ sealed abstract class MethodStatement extends Statement with ConstructorStatemen
 case class VarDef(typ: Type, name: String, value: Expression) extends MethodStatement
 case class Assignment(name: String, value: Expression) extends MethodStatement
 
-case class SuperConstructorCall(signature: Signature, params: List[Expression]) extends ConstructorStatement
+case class SuperConstructorCall(signature: Signature, params: List[Expression]) extends ConstructorStatement {
+  def jparams: JList[Expression] = params
+}
 
 sealed abstract class Expression extends MethodStatement
 
@@ -48,13 +66,21 @@ case object NullLiteral extends Literal
 case class StringLiteral(v: String) extends Literal
 
 case class VarRef(name: String) extends Expression
-case class Signature(returnType: Type, paramTypes: List[Type]) extends AST
-case class NewCall(classRef: ClassRef, signature: Signature, params: List[Expression]) extends Expression
-case class MethodCall(on: Expression, signature: Signature, name: String, params: List[Expression]) extends Expression
 case object ThisRef extends Expression
 
+case class Signature(returnType: Type, paramTypes: List[Type]) extends AST {
+  def jparamTypes: JList[Type] = paramTypes
+}
+case class NewCall(classRef: ClassRef, signature: Signature, params: List[Expression]) extends Expression {
+  def jparams: JList[Expression] = params
+}
+case class MethodCall(on: Expression, signature: Signature, name: String, params: List[Expression]) extends Expression {
+  def jparams: JList[Expression] = params
+}
 case class StaticMethodCall(classRef: ClassRef, signature: Signature, name: String, params: List[Expression])
-        extends Expression
+        extends Expression {
+  def jparams: JList[Expression] = params
+}
 
 sealed abstract class Type extends AST
 case class ClassRef(pkg: Package, name: String) extends Type
