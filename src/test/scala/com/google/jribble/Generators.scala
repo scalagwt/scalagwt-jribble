@@ -107,13 +107,12 @@ object Generators {
   } yield cs.map(Left(_)) ++ ms.map(Right(_))
 
   def classDef: Gen[ClassDef] = for {
-    p <- pkg
     m <- classModifiers
-    n <- identifier
+    n <- classRef
     e <- extendsDef
     i <- implementsDef
     b <- classBody
-  } yield ClassDef(p, m, n, e, i, b)
+  } yield ClassDef(m, n, e, i, b)
 
   implicit val arbClassRef = Arbitrary(classRef)
   implicit val arbPackage = Arbitrary(pkg)

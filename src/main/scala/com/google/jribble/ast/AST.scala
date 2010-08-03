@@ -22,7 +22,7 @@ sealed abstract class AST
 
 case class Package(name: String) extends AST
 
-case class ClassDef(pkg: Package, modifs: Set[String], name: String, ext: Option[ClassRef], implements: List[ClassRef],
+case class ClassDef(modifs: Set[String], name: ClassRef, ext: Option[ClassRef], implements: List[ClassRef],
         body: List[Either[Constructor, MethodDef]]) extends AST {
 
   def jconstructors: JList[Constructor] = body collect { case Left(x) => x}

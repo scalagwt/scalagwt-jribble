@@ -137,7 +137,7 @@ trait Printers {
   }
 
   implicit object ClassDefPrinter extends Printer[ClassDef] {
-    def apply(x: ClassDef) = PackagePrinter(x.pkg) + ";\n\n" + {
+    def apply(x: ClassDef) = {
       val body = (x.body.map {
         case Left(constructor) => ConstructorPrinter(constructor)
         case Right(methodDef) => MethodDefPrinter(methodDef)
@@ -148,7 +148,7 @@ trait Printers {
       }
       val ext = x.ext.map("extends " + ClassRefPrinter(_) + " ").getOrElse("")
 
-      x.modifs.mkString(" ") + " class " + x.name + " " + ext + implements + body
+      x.modifs.map(_ + " ").mkString + "class " + ClassRefPrinter(x.name) + " " + ext + implements + body
     }
   }
 

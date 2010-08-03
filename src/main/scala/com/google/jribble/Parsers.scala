@@ -29,8 +29,6 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     case x ~ xs => Package((x :: xs) mkString ".")
   }
 
-  val packageDeclaration: Parser[Package] = packageCoord <~ ";" <~ LF
-
   val classModifs: Parser[Set[String]] = {
     val clazzModif: Parser[String] = {
       val allowedModifs = Set("public", "final")
@@ -45,9 +43,9 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
   }
 
   val classDef: Parser[ClassDef] =
-    ((packageDeclaration <~ ignoreWsLF) ~ (classModifs <~ "class" <~ ws) ~ (name <~ ws) ~
-            ((extendsDef <~ ws)?) ~ ((implementsDef <~ ws)?) ~! classBody) ^^ {
-      case pkg ~ modifs ~ name ~ ext ~ impl ~ body => ClassDef(pkg, modifs, name, ext, impl.getOrElse(Nil), body)
+    ((classModifs <~ "class" <~ ws) ~! (classRef <~ ws) ~!
+            ((extendsDef <~ ws)?) ~!((implementsDef <~ ws)?) ~! classBody) ^^ {
+      case modifs ~ classRef ~ ext ~ impl ~ body => ClassDef(modifs, classRef, ext, impl.getOrElse(Nil), body)
     }
 
   def name: Parser[String] = "[a-zA-Z$][a-zA-Z0-9_$]*".r
