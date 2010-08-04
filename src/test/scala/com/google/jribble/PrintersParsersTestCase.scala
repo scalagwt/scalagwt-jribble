@@ -39,9 +39,7 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
       }
   }
 
-  property("Package") = checkIdentityEqual(printers.PackagePrinter andThen parsers.packageCoord)
-
-  property("ClassName") = checkIdentityEqual(printers.ClassNamePrinter andThen parsers.className)
+  property("Ref") = checkIdentityEqual(printers.RefPrinter andThen parsers.ref)
 
   property("primitive") = checkIdentityEqual(printers.PrimitivePrinter andThen parsers.primitive)
 

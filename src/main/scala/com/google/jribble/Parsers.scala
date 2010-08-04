@@ -24,11 +24,6 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
 
   private val ident: Parser[String] = "[a-zA-Z][a-zA-Z0-9_]*".r
 
-  //todo (grek): deal with default (empty) packages
-  val packageCoord: Parser[Package] = ("package" ~> ws ~> (ident ~ (("." ~> ident)*))) ^^ {
-    case x ~ xs => Package((x :: xs) mkString ".")
-  }
-
   val classModifs: Parser[Set[String]] = {
     val clazzModif: Parser[String] = {
       val allowedModifs = Set("public", "final")
@@ -42,21 +37,21 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     ((clazzModif <~ ws) *).map(_.toSet)
   }
 
-  val classDef: Parser[ClassDef] =
-    ((classModifs <~ "class" <~ ws) ~! (className <~ ws) ~!
-            ((extendsDef <~ ws)?) ~!((implementsDef <~ ws)?) ~! classBody) ^^ {
+  val classDef: Parser[ClassDef] = ((classModifs <~ "class" <~ ws) ~! (ref <~ ws) ~!
+            ((extendsDef <~ ws)?) ~! ((implementsDef <~ ws)?) ~! classBody) ^^ {
       case modifs ~ classRef ~ ext ~ impl ~ body => ClassDef(modifs, classRef, ext, impl.getOrElse(Nil), body)
     }
 
   def name: Parser[String] = "[a-zA-Z$][a-zA-Z0-9_$]*".r
 
-  def className: Parser[ClassName] = ("(" ~> packageCoord <~ ")") ~! (("." ~> name)) ^^ {
-    case x ~ y => ClassName(x, y)
-  }
+  def coord: Parser[List[String]] = name ~ (("/" ~> name)*) ^^ { case x ~ xs => x :: xs }
 
-  def extendsDef: Parser[ClassName] = "extends" ~> ws ~> className
+  //todo (grek): deal with empty packages
+  def ref: Parser[Ref] = ("L" ~> coord <~ ";") ^^ { xs => Ref(Package(xs.init mkString "/"), xs.last) }
 
-  def implementsDef: Parser[List[ClassName]] = "implements" ~> ws ~> className ~ (("," ~> ws ~> className)*) ^^ {
+  def extendsDef: Parser[Ref] = "extends" ~> ws ~> ref
+
+  def implementsDef: Parser[List[Ref]] = "implements" ~> ws ~> ref ~(("," ~> ws ~> ref)*) ^^ {
     case x ~ xs => x :: xs
   }
 
@@ -67,15 +62,16 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     "{" ~> ignoreWsLF ~> ((ignoreWsLF ~> bodyElement <~ ignoreWsLF)*) <~ "}"
   }
 
-  def primitive: Parser[Primitive] =
-    ("byte" | "short" | "int" | "long" | "float" | "double" | "boolean" | "char") ^^ (Primitive(_))
-  def array: Parser[Array] = ((primitive | className) ~ (literal("[]")+)) ^^ {
+  // BOOLEAN | BYTE | CHAR | DOUBLE | FLOAT | INT | LONG | SHORT
+  //todo (grek): introduce separate nodes for all primitive types
+  def primitive: Parser[Primitive] = ("Z" | "B" | "C" | "D" | "F" | "I" | "J" | "S") ^^ (Primitive(_))
+  def array: Parser[Array] = ((primitive | ref) ~ (literal("[")+)) ^^ {
     case typ ~ xs => {
       def iterateTimes[T](f: T => T, v: T, n: Int): T = if (n <= 0) v else f(iterateTimes(f, v, n-1))
       Array(iterateTimes(Array: (Type => Type), typ, xs.length-1))
     }
   }
-  def typ: Parser[Type] = array | primitive | className
+  def typ: Parser[Type] = array | primitive | ref
 
   def paramsDef: Parser[List[ParamDef]] = {
     val paramDef: Parser[ParamDef] = ((typ <~ ws) ~ name) ^^ { case t ~ i => ParamDef(i, t) }
@@ -91,8 +87,12 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
 
   def methodBody: Parser[List[MethodStatement]] = statements(methodStatement)
 
-  def superConstructorCallStatement: Parser[SuperConstructorCall] = ("super" ~> signature ~ params <~ ";") ^^ {
-    case signature ~ params => SuperConstructorCall(signature, params)
+  def superConstructorCallStatement: Parser[SuperConstructorCall] = {
+    val superSignature = signature into {
+      case s @ Signature(_, name, _, _) if name == "super" => success(s)
+      case s => failure("Super call must have 'super' as name of a method in singature.")
+    }
+    (superSignature ~ params <~ ";") ^^ { case signature ~ params => SuperConstructorCall(signature, params) }
   }
   def constructorBody: Parser[List[ConstructorStatement]] = statements(superConstructorCallStatement | methodStatement)
 
@@ -107,7 +107,7 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     case returnType ~ name ~ paramsDef ~ body => MethodDef(returnType, name, paramsDef, body)
   }
 
-  def returnType: Parser[Type] = typ | ("void" ^^^ Void)
+  def returnType: Parser[Type] = typ | ("V" ^^^ Void)
 
   def varDef: Parser[VarDef] = typ ~ ((ws ~> ident) <~ (ws ~ "=" ~ ws)) ~ expression ^^ {
     case typ ~ ident ~ expression => VarDef(typ, ident, expression)
@@ -116,8 +116,8 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
   def methodStatement: Parser[MethodStatement] = (varDef | assignment | expression) <~ ";"
 
   def expression: Parser[Expression] = {
-    val staticCall: Parser[StaticMethodCall] = (className ~ methodCall) ^^ {
-      case classRef ~ (name ~ signature ~ params) => StaticMethodCall(classRef, signature, name, params)
+    val staticCall: Parser[StaticMethodCall] = (ref ~ methodCall) ^^ {
+      case ref ~ (signature ~ params) => StaticMethodCall(ref, signature, params)
     }
     val thisRef: Parser[Expression] = "this" ^^^ ThisRef
     val varRef: Parser[VarRef] = ident ^^ (VarRef)
@@ -126,7 +126,7 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
         //todo (grek): this fragment even if involves simple folding of calls might be slightly dense and might deserve
         //todo (grek): a few words of more elaborate explanation. Must ask others for opinion
         val fs: List[Expression => Expression] = calls map {
-          case name ~ signature ~ params => MethodCall(_: Expression, signature, name, params)
+          case signature ~ params => MethodCall(_: Expression, signature, params)
         }
         //type ascription is needed because otherwise Expression with Product is inferred which causes type checking
         //errors in f(x) expression because it result in Expression and not Expression with Product
@@ -137,14 +137,14 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     }
   }
 
-  def signature: Parser[Signature] = ("<" ~> returnType) ~! ((("," ~! ws) ~> typ)*) <~ ">" ^^ {
-    case x ~ ys => Signature(x, ys)
+  def signature: Parser[Signature] = "(" ~> ((ref <~ "::") ~ name) ~! ("(" ~> (typ *) <~ ")") ~! returnType <~ ")" ^^ {
+    case on ~ name ~ paramTypes ~ returnType => Signature(on, name, paramTypes, returnType)
   }
 
-  def methodCall: Parser[String ~ Signature ~ List[Expression]] = "." ~> name ~ signature ~ params
+  def methodCall: Parser[Signature ~ List[Expression]] = "." ~> signature ~! params
 
-  def newCall: Parser[NewCall] = ("new" ~> ws ~> className ~! signature ~! params) ^^ {
-    case classRef ~ signature ~ params => NewCall(classRef, signature, params)
+  def newCall: Parser[NewCall] = ("new" ~> ws ~> signature ~! params) ^^ {
+    case signature ~ params => NewCall(signature, params)
   }
 
   def params: Parser[List[Expression]] = {

@@ -34,15 +34,15 @@ class JribbleSampleTestCase {
 
   @Test
   def hello {
-    val input = """public class (package com.google.gwt.sample.jribble.client).Hello extends (package java.lang).Object implements (package com.google.gwt.core.client).EntryPoint, (package scala).ScalaObject {
+    val input = """public class Lcom/google/gwt/sample/jribble/client/Hello; extends Ljava/lang/Object; implements Lcom/google/gwt/core/client/EntryPoint;, Lscala/ScalaObject; {
 
-  public void onModuleLoad() {
-    (package com.google.gwt.user.client.ui).Button b = new (package com.google.gwt.user.client.ui).Button<(package com.google.gwt.user.client.ui).Button, (package java.lang).String, (package com.google.gwt.event.dom.client).ClickHandler>("Click me", new (package com.google.gwt.sample.jribble.client).Hello$$anon$1<(package com.google.gwt.sample.jribble.client).Hello$$anon$1, (package com.google.gwt.sample.jribble.client).Hello>(this));
-    (package com.google.gwt.user.client.ui).RootPanel.get<(package com.google.gwt.user.client.ui).RootPanel>().add<void, (package com.google.gwt.user.client.ui).Widget>(b);
+  public V onModuleLoad() {
+    Lcom/google/gwt/user/client/ui/Button; b = new (Lcom/google/gwt/user/client/ui/Button;::Button(Ljava/lang/String;Lcom/google/gwt/event/dom/client/ClickHandler;)V)("Click me", new (Lcom/google/gwt/sample/jribble/client/Hello$$anon$1;::Hello$$anon$1(Lcom/google/gwt/sample/jribble/client/Hello;)V)(this));
+    Lcom/google/gwt/user/client/ui/RootPanel;.(Lcom/google/gwt/user/client/ui/RootPanel;::get()Lcom/google/gwt/user/client/ui/RootPanel;)().(Lcom/google/gwt/user/client/ui/AbsolutePanel;::add(Lcom/google/gwt/user/client/ui/Widget;)V)(b);
   }
 
   public Hello() {
-    super<(package java.lang).Object>();
+    (Ljava/lang/Object;::super()V)();
   }
 }
 """
@@ -57,14 +57,14 @@ class JribbleSampleTestCase {
 
   @Test
   def helloInner {
-    val input = """public final class (package com.google.gwt.sample.jribble.client).Hello$$anon$1 extends (package java.lang).Object implements (package com.google.gwt.event.dom.client).ClickHandler {
+    val input = """public final class Lcom/google/gwt/sample/jribble/client/Hello$$anon$1; extends Ljava/lang/Object; implements Lcom/google/gwt/event/dom/client/ClickHandler; {
 
-  public void onClick((package com.google.gwt.event.dom.client).ClickEvent event) {
-    (package com.google.gwt.user.client).Window.alert<void, (package java.lang).String>("Hello, AJAX");
+  public V onClick(Lcom/google/gwt/event/dom/client/ClickEvent; event) {
+    Lcom/google/gwt/event/dom/client/Window;.(Lcom/google/gwt/event/dom/client/Window;::alert(Ljava/lang/String;)V)("Hello, AJAX");
   }
 
-  public Hello$$anon$1((package com.google.gwt.sample.jribble.client).Hello $outer) {
-    super<(package java.lang).Object>();
+  public Hello$$anon$1(Lcom/google/gwt/sample/jribble/client/Hello; $outer) {
+    (Ljava/lang/Object;::super()V)();
   }
 }
 """

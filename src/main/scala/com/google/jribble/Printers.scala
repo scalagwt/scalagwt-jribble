@@ -24,11 +24,11 @@ trait Printers {
   }
 
   implicit object PackagePrinter extends Printer[Package] {
-    def apply(x: Package) = "package " + x.name
+    def apply(x: Package) = x.name
   }
 
-  implicit object ClassNamePrinter extends Printer[ClassName] {
-    def apply(x: ClassName) = "(" + PackagePrinter(x.pkg) + ")." + x.name
+  implicit object RefPrinter extends Printer[Ref] {
+    def apply(x: Ref) = "L" + PackagePrinter(x.pkg) + "/" + x.name + ";"
   }
 
   implicit object PrimitivePrinter extends Printer[Primitive] {
@@ -36,15 +36,15 @@ trait Printers {
   }
 
   implicit object ArrayPrinter extends Printer[Array] {
-    def apply(x: Array) = TypePrinter(x.typ) + "[]"
+    def apply(x: Array) = TypePrinter(x.typ) + "["
   }
 
   implicit object TypePrinter extends Printer[Type] {
     def apply(x: Type) = x match {
-      case x: ClassName => ClassNamePrinter(x)
+      case x: Ref => RefPrinter(x)
       case x: Primitive => PrimitivePrinter(x)
       case x: Array => ArrayPrinter(x)
-      case Void => "void"
+      case Void => "V"
     }
   }
 
@@ -76,21 +76,21 @@ trait Printers {
   }
 
   implicit object SignaturePrinter extends Printer[Signature] {
-    def apply(x: Signature) = (x.returnType :: x.paramTypes).map(TypePrinter).mkString("<", ", ", ">")
+    def apply(x: Signature) = "(" + RefPrinter(x.on) + "::" + x.name +
+            x.paramTypes.map(TypePrinter).mkString("(", "",")") + TypePrinter(x.returnType) + ")"
   }
 
   implicit object NewCallPrinter extends Printer[NewCall] {
-    def apply(x: NewCall) = "new " + ClassNamePrinter(x.classRef) + SignaturePrinter(x.signature) +
+    def apply(x: NewCall) = "new " + SignaturePrinter(x.signature) +
             ParamsPrinter(x.params)
   }
 
   implicit object MethodCallPrinter extends Printer[MethodCall] {
-    def apply(x: MethodCall) = ExpressionPrinter(x.on) + "." + x.name + SignaturePrinter(x.signature) +
-            ParamsPrinter(x.params)
+    def apply(x: MethodCall) = ExpressionPrinter(x.on) + "." + SignaturePrinter(x.signature) + ParamsPrinter(x.params)
   }
 
   implicit object StaticMethodCallPrinter extends Printer[StaticMethodCall] {
-    def apply(x: StaticMethodCall) = ClassNamePrinter(x.classRef) + "." + x.name + SignaturePrinter(x.signature) +
+    def apply(x: StaticMethodCall) = RefPrinter(x.classRef) + "." + SignaturePrinter(x.signature) +
             ParamsPrinter(x.params)
   }
 
@@ -144,11 +144,11 @@ trait Printers {
       }).mkString("{\n", "\n", "}\n")
       val implements = x.implements match {
         case Nil => ""
-        case xs => xs.map(ClassNamePrinter).mkString("implements ", ", ", " ")
+        case xs => xs.map(RefPrinter).mkString("implements ", ", ", " ")
       }
-      val ext = x.ext.map("extends " + ClassNamePrinter(_) + " ").getOrElse("")
+      val ext = x.ext.map("extends " + RefPrinter(_) + " ").getOrElse("")
 
-      x.modifs.map(_ + " ").mkString + "class " + ClassNamePrinter(x.name) + " " + ext + implements + body
+      x.modifs.map(_ + " ").mkString + "class " + RefPrinter(x.name) + " " + ext + implements + body
     }
   }
 
