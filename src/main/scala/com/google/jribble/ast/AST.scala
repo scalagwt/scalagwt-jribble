@@ -72,7 +72,7 @@ case class StringLiteral(v: String) extends Literal
 case class VarRef(name: String) extends Expression
 case object ThisRef extends Expression
 
-case class Signature(on: Ref, name: String,paramTypes: List[Type], returnType: Type) extends AST {
+case class Signature(on: Ref, name: String, paramTypes: List[Type], returnType: Type) extends AST {
   def jparamTypes: JList[Type] = paramTypes
 }
 case class NewCall(signature: Signature, params: List[Expression]) extends Expression {
