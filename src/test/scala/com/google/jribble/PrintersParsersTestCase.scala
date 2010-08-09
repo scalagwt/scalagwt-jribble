@@ -73,4 +73,6 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
 
   property("classDef") = checkIdentityEqual(printers.ClassDefPrinter andThen parsers.classDef)
 
+  property("interfaceDef") = checkIdentityEqual(printers.InterfaceDefPrinter andThen parsers.interfaceDef)
+
 }

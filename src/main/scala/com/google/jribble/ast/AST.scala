@@ -32,6 +32,10 @@ case class ClassDef(modifs: Set[String], name: Ref, ext: Option[Ref], implements
   def jimplements: JList[Ref] = implements
 }
 
+case class InterfaceDef(modifs: Set[String], name: Ref, ext: Option[Ref], body: List[MethodDef]) extends AST {
+  def jbody: JList[MethodDef] = body
+}
+
 case class ParamDef(name: String, typ: Type) extends AST
 
 case class Constructor(name: String, params: List[ParamDef], body: List[ConstructorStatement]) extends AST {

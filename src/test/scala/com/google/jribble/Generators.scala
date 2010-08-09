@@ -102,6 +102,12 @@ object Generators {
     val modif = Gen.oneOf("public", "final")
     Gen.resize(2, Gen.listOf(modif)).map(_.toSet)
   }
+
+  def interfaceModifiers: Gen[Set[String]] = {
+    val modif = Gen.oneOf("public", "abstract")
+    Gen.resize(2, Gen.listOf(modif)).map(_.toSet)
+  }
+
   def extendsDef: Gen[Option[Ref]] = Arbitrary.arbitrary[Option[Ref]]
 
   def implementsDef: Gen[List[Ref]] = Gen.resize(3, Gen.listOf(ref))
@@ -111,6 +117,10 @@ object Generators {
     ms <- Gen.resize(5, Gen.listOf(methodDef))
   } yield cs.map(Left(_)) ++ ms.map(Right(_))
 
+  def interfaceBody: Gen[List[MethodDef]] = for {
+    ms <- Gen.resize(5, Gen.listOf(methodDef.filter(_.body.isEmpty)))
+  } yield ms
+
   def classDef: Gen[ClassDef] = for {
     m <- classModifiers
     n <- ref
@@ -118,6 +128,13 @@ object Generators {
     i <- implementsDef
     b <- classBody
   } yield ClassDef(m, n, e, i, b)
+
+  def interfaceDef: Gen[InterfaceDef] = for {
+    m <- interfaceModifiers
+    n <- ref
+    e <- extendsDef
+    b <- interfaceBody
+  } yield InterfaceDef(m, n, e, b)
 
   implicit val arbRef = Arbitrary(ref)
   implicit val arbPackage = Arbitrary(pkg)
@@ -139,4 +156,5 @@ object Generators {
   implicit val arbConstructor = Arbitrary(constructor)
   implicit val arbMethodDef = Arbitrary(methodDef)
   implicit val arbClassDef = Arbitrary(classDef)
+  implicit val arbInterfaceDef = Arbitrary(interfaceDef)
 }

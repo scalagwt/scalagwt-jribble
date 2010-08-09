@@ -152,4 +152,13 @@ trait Printers {
     }
   }
 
+  implicit object InterfaceDefPrinter extends Printer[InterfaceDef] {
+    def apply(x: InterfaceDef) = {
+      val body = x.body.map(MethodDefPrinter).mkString("{\n", "\n", "}\n")
+      val ext = x.ext.map("extends " + RefPrinter(_) + " ").getOrElse("")
+
+      x.modifs.map(_ + " ").mkString + "interface " + RefPrinter(x.name) + " " + ext + body
+    }
+  }
+
 }

@@ -60,7 +60,7 @@ class JribbleSampleTestCase {
     val input = """public final class Lcom/google/gwt/sample/jribble/client/Hello$$anon$1; extends Ljava/lang/Object; implements Lcom/google/gwt/event/dom/client/ClickHandler; {
 
   public V onClick(Lcom/google/gwt/event/dom/client/ClickEvent; event) {
-    Lcom/google/gwt/event/dom/client/Window;.(Lcom/google/gwt/event/dom/client/Window;::alert(Ljava/lang/String;)V)("Hello, AJAX");
+    Lcom/google/gwt/user/client/Window;.(Lcom/google/gwt/user/client/Window;::alert(Ljava/lang/String;)V)("Hello, AJAX");
   }
 
   public Hello$$anon$1(Lcom/google/gwt/sample/jribble/client/Hello; $outer) {

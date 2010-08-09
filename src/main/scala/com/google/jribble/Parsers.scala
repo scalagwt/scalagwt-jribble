@@ -24,22 +24,34 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
 
   private val ident: Parser[String] = "[a-zA-Z][a-zA-Z0-9_]*".r
 
-  val classModifs: Parser[Set[String]] = {
-    val clazzModif: Parser[String] = {
-      val allowedModifs = Set("public", "final")
-      ident into { x =>
-        if (allowedModifs contains x)
-          success(x)
-        else
-          failure("Class modifier can be only one of " + allowedModifs)
-      }
+  def modifs(allowed: Set[String]): Parser[List[String]] = {
+    val modif = ident into { x =>
+      if (allowed contains x)
+        success(x)
+      else
+        failure("Modifier can be only one of " + allowed)
     }
-    ((clazzModif <~ ws) *).map(_.toSet)
+    ((modif <~ ws) *)
+  }
+
+  val classModifs: Parser[Set[String]] = {
+    val allowed = Set("public", "final")
+    modifs(allowed).map(_.toSet)
+  }
+
+  val interfaceModifs: Parser[Set[String]] = {
+    val allowed = Set("public", "abstract")
+    modifs(allowed).map(_.toSet)
   }
 
   val classDef: Parser[ClassDef] = ((classModifs <~ "class" <~ ws) ~! (ref <~ ws) ~!
             ((extendsDef <~ ws)?) ~! ((implementsDef <~ ws)?) ~! classBody) ^^ {
       case modifs ~ classRef ~ ext ~ impl ~ body => ClassDef(modifs, classRef, ext, impl.getOrElse(Nil), body)
+    }
+
+  val interfaceDef: Parser[InterfaceDef] = ((interfaceModifs <~ "interface" <~ ws) ~! (ref <~ ws) ~!
+            ((extendsDef <~ ws)?) ~! interfaceBody) ^^ {
+      case modifs ~ interfaceRef ~ ext ~ body => InterfaceDef(modifs, interfaceRef, ext, body)
     }
 
   def name: Parser[String] = "[a-zA-Z$][a-zA-Z0-9_$]*".r
@@ -60,6 +72,14 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     val methodDef = this.methodDef ^^ (Right(_))
     val bodyElement = constructor | methodDef
     "{" ~> ignoreWsLF ~> ((ignoreWsLF ~> bodyElement <~ ignoreWsLF)*) <~ "}"
+  }
+
+  def interfaceBody: Parser[List[MethodDef]] = {
+    val methodDef = this.methodDef into {
+      case x @ MethodDef(_, _, _, body) if body.isEmpty => success(x)
+      case x => failure("Method definition should have an empty body.")
+    }
+    "{" ~> ignoreWsLF ~> ((ignoreWsLF ~> methodDef <~ ignoreWsLF)*) <~ "}"
   }
 
   // BOOLEAN | BYTE | CHAR | DOUBLE | FLOAT | INT | LONG | SHORT
