@@ -58,8 +58,13 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
 
   def coord: Parser[List[String]] = name ~ (("/" ~> name)*) ^^ { case x ~ xs => x :: xs }
 
-  //todo (grek): deal with empty packages
-  def ref: Parser[Ref] = ("L" ~> coord <~ ";") ^^ { xs => Ref(Package(xs.init mkString "/"), xs.last) }
+  def ref: Parser[Ref] = ("L" ~> coord <~ ";") ^^ { xs =>
+    val pkg = xs.init match {
+      case Nil => None
+      case xs => Some(Package(xs mkString "/"))
+    }
+    Ref(pkg, xs.last)
+  }
 
   def extendsDef: Parser[Ref] = "extends" ~> ws ~> ref
 

@@ -28,7 +28,7 @@ trait Printers {
   }
 
   implicit object RefPrinter extends Printer[Ref] {
-    def apply(x: Ref) = "L" + PackagePrinter(x.pkg) + "/" + x.name + ";"
+    def apply(x: Ref) = "L" + x.pkg.map(PackagePrinter(_) + "/").getOrElse("") + x.name + ";"
   }
 
   implicit object PrimitivePrinter extends Printer[Primitive] {

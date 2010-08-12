@@ -26,7 +26,10 @@ object Generators {
   def pkg: Gen[Package] = for(x <- identifier; xs <- Gen.resize(2, Gen.listOf(identifier))) yield
     Package(x + (xs.map("/" + _) mkString))
 
-  def ref: Gen[Ref] = for(name <- identifier; p <- pkg) yield Ref(p, name)
+  def ref: Gen[Ref] = {
+    implicit val arbPackage = Arbitrary(pkg)
+    for(name <- identifier; p <- Arbitrary.arbitrary[Option[Package]]) yield Ref(p, name)
+  }
 
   def primitive: Gen[Primitive] =
     for (name <- Gen.oneOf("Z", "B", "C", "D", "F", "I", "J", "S")) yield Primitive(name)

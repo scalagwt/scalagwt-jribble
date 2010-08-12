@@ -88,7 +88,9 @@ case class StaticMethodCall(classRef: Ref, signature: Signature, params: List[Ex
 }
 
 sealed abstract class Type extends AST
-case class Ref(pkg: Package, name: String) extends Type
+case class Ref(pkg: Option[Package], name: String) extends Type {
+  def javaName: String = pkg.map(_.name.replace("/", ".") + ".").getOrElse("") + name
+}
 case class Primitive(name: String) extends Type
 case class Array(typ: Type) extends Type
 case object Void extends Type
