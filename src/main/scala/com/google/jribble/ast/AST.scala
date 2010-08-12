@@ -20,10 +20,12 @@ import java.util.{List => JList}
 
 sealed abstract class AST
 
+sealed abstract class DeclaredType
+
 case class Package(name: String) extends AST
 
 case class ClassDef(modifs: Set[String], name: Ref, ext: Option[Ref], implements: List[Ref],
-        body: List[Either[Constructor, MethodDef]]) extends AST {
+        body: List[Either[Constructor, MethodDef]]) extends DeclaredType {
 
   def jconstructors: JList[Constructor] = body collect { case Left(x) => x}
 
@@ -32,7 +34,7 @@ case class ClassDef(modifs: Set[String], name: Ref, ext: Option[Ref], implements
   def jimplements: JList[Ref] = implements
 }
 
-case class InterfaceDef(modifs: Set[String], name: Ref, ext: Option[Ref], body: List[MethodDef]) extends AST {
+case class InterfaceDef(modifs: Set[String], name: Ref, ext: Option[Ref], body: List[MethodDef]) extends DeclaredType {
   def jbody: JList[MethodDef] = body
 }
 
