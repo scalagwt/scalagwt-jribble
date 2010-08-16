@@ -21,11 +21,10 @@ package com.google.jribble
 class DefParser {
 
   val parsers = new Parsers {
-    val defParser: Parser[Either[ast.ClassDef, ast.InterfaceDef]] =
-      (classDef ^^ (Left(_))) | (interfaceDef ^^ (Right(_)))
+    val defParser: Parser[ast.DeclaredType] = classDef | interfaceDef
   }
 
-  def parse(in: java.io.Reader): Either[ast.ClassDef, ast.InterfaceDef] = parsers.parse(parsers.defParser, in) match {
+  def parse(in: java.io.Reader): ast.DeclaredType = parsers.parse(parsers.defParser, in) match {
     case parsers.Success(result, _) => result
     case x => error("Could not parse the input " + x)
   }
