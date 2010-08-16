@@ -20,7 +20,9 @@ import java.util.{List => JList}
 
 sealed abstract class AST
 
-sealed abstract class DeclaredType
+sealed abstract class DeclaredType {
+  def name: Ref
+}
 
 case class Package(name: String) extends AST
 
