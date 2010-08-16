@@ -45,10 +45,12 @@ case class ParamDef(name: String, typ: Type) extends AST
 case class Constructor(name: String, params: List[ParamDef], body: List[ConstructorStatement]) extends AST {
   def jparams: JList[ParamDef] = params
   def jbody: JList[ConstructorStatement] = body
+  def signature(enclosing: Ref) = Signature(enclosing, enclosing.name, params.map(_.typ), Void)
 }
 case class MethodDef(returnType: Type, name: String, params: List[ParamDef], body: List[MethodStatement]) extends AST {
   def jparams: JList[ParamDef] = params
   def jbody: JList[MethodStatement] = body
+  def signature(enclosing: Ref) = Signature(enclosing, name, params.map(_.typ), returnType)
 }
 
 sealed abstract class Statement extends AST
