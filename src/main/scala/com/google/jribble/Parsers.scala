@@ -108,7 +108,7 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
   }
 
   def statements[T <: Statement](statement: Parser[T]): Parser[List[T]] =
-    (("{" ~ LF ~ "}") ^^^ List()) | ("{" ~> (((ignoreWsLF ~> statement) <~ ignoreWsLF)+) <~ "}")
+    (("{" ~ ignoreWsLF ~ "}") ^^^ List()) | ("{" ~> (((ignoreWsLF ~> statement) <~ ignoreWsLF)+) <~ "}")
 
   def methodBody: Parser[List[MethodStatement]] = statements(methodStatement)
 
