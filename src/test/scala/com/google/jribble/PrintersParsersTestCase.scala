@@ -57,13 +57,17 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
 
   //todo (grek): possibly tests for methodCalls and staticMethodCalls?
 
+  property("conditional") = checkIdentityEqual(printers.ConditionalPrinter andThen parsers.conditional)
+
   property("expression") = checkIdentityEqual(printers.ExpressionPrinter andThen parsers.expression)
 
   property("varDef") = checkIdentityEqual(printers.VarDefPrinter andThen parsers.varDef)
 
   property("assignment") = checkIdentityEqual(printers.AssignmentPrinter andThen parsers.assignment)
 
-  property("methodBody") = checkIdentityEqual(printers.MethodBodyPrinter andThen parsers.methodBody)
+  property("if") = checkIdentityEqual(printers.IfPrinter andThen parsers.ifStatement)
+
+  property("methodBody") = checkIdentityEqual(printers.BlockPrinter andThen parsers.methodBody)
 
   property("constructorBody") = checkIdentityEqual(printers.ConstructorBodyPrinter andThen parsers.constructorBody)
 

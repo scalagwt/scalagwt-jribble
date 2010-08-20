@@ -110,7 +110,9 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
   def statements[T <: Statement](statement: Parser[T]): Parser[List[T]] =
     (("{" ~ ignoreWsLF ~ "}") ^^^ List()) | ("{" ~> (((ignoreWsLF ~> statement) <~ ignoreWsLF)+) <~ "}")
 
-  def methodBody: Parser[Block[MethodStatement]] = statements(methodStatement) ^^ (Block(_))
+  def block: Parser[Block[MethodStatement]] = statements(methodStatement) ^^ (Block(_))
+
+  def methodBody: Parser[Block[MethodStatement]] = block
 
   def superConstructorCallStatement: Parser[SuperConstructorCall] = {
     val superSignature = signature into {
@@ -139,7 +141,17 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     case typ ~ ident ~ expression => VarDef(typ, ident, expression)
   }
 
-  def methodStatement: Parser[MethodStatement] = (varDef | assignment | expression) <~ ";"
+  def methodStatement: Parser[MethodStatement] = ifStatement | ((varDef | assignment | expression) <~ ";")
+
+  def ifStatement: Parser[If] =
+    ("if" ~> ws ~> "(" ~> expression <~ ")") ~! (ignoreWsLF ~> block) ~ ((ignoreWsLF ~> "else" ~> ws ~> block)?) ^^ {
+      case condition ~ then ~ elsee => If(condition, then, elsee)
+    }
+
+  def conditional: Parser[Conditional] = (expression <~ ws <~ "?") ~! (ws ~> expression) ~!
+          (ws ~> ":" ~> ws ~> expression) ^^ {
+    case condition ~ then ~ elsee => Conditional(condition, then, elsee)
+  }
 
   def expression: Parser[Expression] = {
     val staticCall: Parser[StaticMethodCall] = (ref ~ methodCall) ^^ {
@@ -147,7 +159,10 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     }
     val thisRef: Parser[Expression] = "this" ^^^ ThisRef
     val varRef: Parser[VarRef] = ident ^^ (VarRef)
-    ((literal | newCall | staticCall | thisRef | varRef) ~ (methodCall *)) ^^ {
+    //all possible types of expression on which method can be called, note that method called on "this" instance
+    //must be prefixed with this
+    val callTarget = ("(" ~> conditional <~ ")") | literal | newCall | staticCall | thisRef | varRef 
+    (callTarget ~ (methodCall *)) ^^ {
       case on ~ calls => {
         //todo (grek): this fragment even if involves simple folding of calls might be slightly dense and might deserve
         //todo (grek): a few words of more elaborate explanation. Must ask others for opinion

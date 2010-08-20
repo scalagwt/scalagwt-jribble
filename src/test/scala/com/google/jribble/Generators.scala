@@ -67,17 +67,28 @@ object Generators {
     for (on <- expression; s <- signature; p <- params) yield MethodCall(on, s, p)
   def staticMethodCall(implicit depth: Int): Gen[StaticMethodCall] =
     for (c <- ref; s <- signature; p <- params) yield StaticMethodCall(c, s, p)
+  def conditional(implicit depth: Int): Gen[Conditional] = for {
+    condition <- expression
+    then <- expression
+    elsee <- expression
+  } yield Conditional(condition, then, elsee)
 
   def expression(implicit depth: Int): Gen[Expression] = {
     val nonRecursive = Gen.frequency((2, literal), (1, varRef), (1, Gen.value(ThisRef)))
     val recursive = Gen.oneOf(Gen.lzy(newCall(depth+1)), Gen.lzy(methodCall(depth+1)),
-      Gen.lzy(staticMethodCall(depth+1)))
+      Gen.lzy(staticMethodCall(depth+1)), Gen.lzy(conditional))
 
     Gen.frequency((depth+1, nonRecursive), (1, recursive))
   }
 
   def varDef: Gen[VarDef] = for (t <- typ; n <- identifier; v <- expression(0)) yield VarDef(t, n, v)
   def assignment: Gen[Assignment] = for (n <- identifier; v <- expression(0)) yield Assignment(n, v)
+  def ifStatement: Gen[If] = for {
+    condition <- expression(0);
+    then <- block;
+    elsee <- Arbitrary.arbitrary[Option[Block[MethodStatement]]]
+  } yield If(condition, then, elsee)
+
 
   def methodStatement: Gen[MethodStatement] = Gen.oneOf(varDef, assignment, expression(0))
   def methodStatements: Gen[List[MethodStatement]] = Gen.listOf(methodStatement)
@@ -92,7 +103,8 @@ object Generators {
   def constructor: Gen[Constructor] =
     for (n <- identifier; p <- paramsDef; b <- constructorBody) yield Constructor(n, p, b)
 
-  def methodBody: Gen[Block[MethodStatement]] = methodStatements map (Block(_))
+  def block: Gen[Block[MethodStatement]] = methodStatements map (Block(_))
+  def methodBody: Gen[Block[MethodStatement]] = block
   def returnType = typ | Void
   def methodDef: Gen[MethodDef] =
     for (t <- returnType; n <- identifier; p <- paramsDef; b <- methodBody) yield MethodDef(t, n, p, b)
@@ -146,9 +158,11 @@ object Generators {
   implicit val arbNewCall = Arbitrary(newCall(0))
   implicit val arbMethodCall = Arbitrary(methodCall(0))
   implicit val arbStaticMethodCall = Arbitrary(staticMethodCall(0))
+  implicit val arbConditional = Arbitrary(conditional(0))
   implicit val arbExpression = Arbitrary(expression(0))
   implicit val arbVarDef = Arbitrary(varDef)
   implicit val arbAssignment = Arbitrary(assignment)
+  implicit val arbIf = Arbitrary(ifStatement)
   implicit val arbMethodStatement = Arbitrary(methodStatement)
   implicit val arbMethodBody = Arbitrary(methodBody)
   implicit val arbConstructorStatements = Arbitrary(constructorBody) 

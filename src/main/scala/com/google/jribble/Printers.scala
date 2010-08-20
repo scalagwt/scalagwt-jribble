@@ -94,6 +94,11 @@ trait Printers {
             ParamsPrinter(x.params)
   }
 
+  implicit object ConditionalPrinter extends Printer[Conditional] {
+    def apply(x: Conditional) = ExpressionPrinter(x.condition) + " ? " +
+            ExpressionPrinter(x.then) + " : " + ExpressionPrinter(x.elsee)
+  }
+
   implicit object ExpressionPrinter extends Printer[Expression] {
     def apply(x: Expression) = x match {
       case x: Literal => LiteralPrinter(x)
@@ -102,6 +107,7 @@ trait Printers {
       case x: NewCall => NewCallPrinter(x)
       case x: MethodCall => MethodCallPrinter(x)
       case x: StaticMethodCall => StaticMethodCallPrinter(x)
+      case x: Conditional => ConditionalPrinter(x)
     }
   }
 
@@ -109,18 +115,26 @@ trait Printers {
     def apply(x: SuperConstructorCall) = "super" + ParamsPrinter(x.params)
   }
 
-  implicit object StatementPrinter extends Printer[Statement] {
-    def apply(x: Statement) = (x match {
-      case x: VarDef => VarDefPrinter(x)
-      case x: Assignment => AssignmentPrinter(x)
-      case x: Expression => ExpressionPrinter(x)
-      case x: SuperConstructorCall => SuperConstructorCall(x)
-    }) + ";"
+  implicit object IfPrinter extends Printer[If] {
+    def apply(x: If) = "if (" + ExpressionPrinter(x.condition) + ") " + BlockPrinter(x.then) + (x.elsee match {
+      case None => ""
+      case Some(block) => " else " + BlockPrinter(block)
+    })
   }
 
-  implicit object MethodBodyPrinter extends Printer[Block[MethodStatement]] {
+  implicit object StatementPrinter extends Printer[Statement] {
+    def apply(x: Statement) = x match {
+      case x: VarDef => VarDefPrinter(x) + ";"
+      case x: Assignment => AssignmentPrinter(x) + ";"
+      case x: Expression => ExpressionPrinter(x) + ";"
+      case x: SuperConstructorCall => SuperConstructorCall(x) + ";"
+      case x: If => IfPrinter(x)
+    }
+  }
+
+  implicit object BlockPrinter extends Printer[Block[MethodStatement]] {
     def apply(block: Block[MethodStatement]) =
-      block.statements.map(StatementPrinter).map(_ + "\n").mkString("{\n", "", "}\n")
+      block.statements.map(StatementPrinter).map(_ + "\n").mkString("{\n", "", "}")
   }
 
   implicit object ConstructorBodyPrinter extends Printer[Block[ConstructorStatement]] {
@@ -135,7 +149,8 @@ trait Printers {
 
   implicit object MethodDefPrinter extends Printer[MethodDef] {
     def apply(x: MethodDef) =
-      "public " + TypePrinter(x.returnType) + " " + x.name + ParamsDefPrinter(x.params) + " " + MethodBodyPrinter(x.body)
+      "public " + TypePrinter(x.returnType) + " " + x.name + ParamsDefPrinter(x.params) + " " +
+              BlockPrinter(x.body) + "\n" 
   }
 
   implicit object ClassDefPrinter extends Printer[ClassDef] {

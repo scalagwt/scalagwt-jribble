@@ -60,6 +60,10 @@ sealed trait ConstructorStatement extends Statement
 sealed abstract class MethodStatement extends Statement with ConstructorStatement
 case class VarDef(typ: Type, name: String, value: Expression) extends MethodStatement
 case class Assignment(name: String, value: Expression) extends MethodStatement
+//TODO(grek): by using Block[MethodStatement] we are making it impossible to call super constructors from
+//blocks in if statements. Not sure if this is important.
+case class If(condition: Expression, then: Block[MethodStatement], elsee: Option[Block[MethodStatement]])
+        extends MethodStatement
 
 case class SuperConstructorCall(signature: Signature, params: List[Expression]) extends ConstructorStatement {
   def jparams: JList[Expression] = params
@@ -92,6 +96,8 @@ case class MethodCall(on: Expression, signature: Signature, params: List[Express
 case class StaticMethodCall(classRef: Ref, signature: Signature, params: List[Expression]) extends Expression {
   def jparams: JList[Expression] = params
 }
+
+case class Conditional(condition: Expression, then: Expression, elsee: Expression) extends Expression
 
 sealed abstract class Type extends AST
 case class Ref(pkg: Option[Package], name: String) extends Type {
