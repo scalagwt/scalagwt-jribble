@@ -89,14 +89,14 @@ object Generators {
   def constructorSuperCall: Gen[SuperConstructorCall] =
     for (s <- signature; p <- params) yield SuperConstructorCall(s, p)
   //we shuffle the list because in jribble there is no requirement that super constructor call is
-  def constructorBody: Gen[List[ConstructorStatement]] = for {
+  def constructorBody: Gen[Block[ConstructorStatement]] = for {
       s <- Gen.resize(1, Gen.listOf(constructorSuperCall))
       ss <- methodStatements
-    } yield scala.util.Random.shuffle(s ::: ss)
+    } yield Block(scala.util.Random.shuffle(s ::: ss))
   def constructor: Gen[Constructor] =
     for (n <- identifier; p <- paramsDef; b <- constructorBody) yield Constructor(n, p, b)
 
-  def methodBody = methodStatements
+  def methodBody: Gen[Block[MethodStatement]] = methodStatements map (Block(_))
   def returnType = typ | Void
   def methodDef: Gen[MethodDef] =
     for (t <- returnType; n <- identifier; p <- paramsDef; b <- methodBody) yield MethodDef(t, n, p, b)
@@ -121,7 +121,7 @@ object Generators {
   } yield cs.map(Left(_)) ++ ms.map(Right(_))
 
   def interfaceBody: Gen[List[MethodDef]] = for {
-    ms <- Gen.resize(5, Gen.listOf(methodDef.filter(_.body.isEmpty)))
+    ms <- Gen.resize(5, Gen.listOf(methodDef.filter(_.body.statements.isEmpty)))
   } yield ms
 
   def classDef: Gen[ClassDef] = for {
@@ -154,7 +154,7 @@ object Generators {
   implicit val arbVarDef = Arbitrary(varDef)
   implicit val arbAssignment = Arbitrary(assignment)
   implicit val arbMethodStatement = Arbitrary(methodStatement)
-  implicit val arbMethodStatements = Arbitrary(methodStatements)
+  implicit val arbMethodBody = Arbitrary(methodBody)
   implicit val arbConstructorStatements = Arbitrary(constructorBody) 
   implicit val arbConstructor = Arbitrary(constructor)
   implicit val arbMethodDef = Arbitrary(methodDef)

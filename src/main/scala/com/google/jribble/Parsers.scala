@@ -81,7 +81,7 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
 
   def interfaceBody: Parser[List[MethodDef]] = {
     val methodDef = this.methodDef into {
-      case x @ MethodDef(_, _, _, body) if body.isEmpty => success(x)
+      case x @ MethodDef(_, _, _, body) if body.statements.isEmpty => success(x)
       case x => failure("Method definition should have an empty body.")
     }
     "{" ~> ignoreWsLF ~> ((ignoreWsLF ~> methodDef <~ ignoreWsLF)*) <~ "}"
@@ -110,7 +110,7 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
   def statements[T <: Statement](statement: Parser[T]): Parser[List[T]] =
     (("{" ~ ignoreWsLF ~ "}") ^^^ List()) | ("{" ~> (((ignoreWsLF ~> statement) <~ ignoreWsLF)+) <~ "}")
 
-  def methodBody: Parser[List[MethodStatement]] = statements(methodStatement)
+  def methodBody: Parser[Block[MethodStatement]] = statements(methodStatement) ^^ (Block(_))
 
   def superConstructorCallStatement: Parser[SuperConstructorCall] = {
     val superSignature = signature into {
@@ -119,7 +119,8 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     }
     (superSignature ~ params <~ ";") ^^ { case signature ~ params => SuperConstructorCall(signature, params) }
   }
-  def constructorBody: Parser[List[ConstructorStatement]] = statements(superConstructorCallStatement | methodStatement)
+  def constructorBody: Parser[Block[ConstructorStatement]] =
+    statements(superConstructorCallStatement | methodStatement) ^^ (Block(_))
 
   //todo (grek): hard-coded "public"
   def constructor: Parser[Constructor] = ("public" ~> ws ~> name ~ paramsDef) ~! (ws ~> constructorBody) ^^ {

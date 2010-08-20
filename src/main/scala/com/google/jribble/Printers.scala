@@ -118,12 +118,14 @@ trait Printers {
     }) + ";"
   }
 
-  implicit object MethodBodyPrinter extends Printer[List[MethodStatement]] {
-    def apply(xs: List[MethodStatement]) = xs.map(StatementPrinter).map(_ + "\n").mkString("{\n", "", "}\n")
+  implicit object MethodBodyPrinter extends Printer[Block[MethodStatement]] {
+    def apply(block: Block[MethodStatement]) =
+      block.statements.map(StatementPrinter).map(_ + "\n").mkString("{\n", "", "}\n")
   }
 
-  implicit object ConstructorBodyPrinter extends Printer[List[ConstructorStatement]] {
-    def apply(xs: List[ConstructorStatement]) = xs.map(StatementPrinter).map(_ + "\n").mkString("{\n", "", "}\n")
+  implicit object ConstructorBodyPrinter extends Printer[Block[ConstructorStatement]] {
+    def apply(block: Block[ConstructorStatement]) =
+      block.statements.map(StatementPrinter).map(_ + "\n").mkString("{\n", "", "}\n")
   }
 
   implicit object ConstructorPrinter extends Printer[Constructor] {
