@@ -43,7 +43,7 @@ object Generators {
     Gen.resize(4, Gen.listOf(paramDef))
   }
 
-  def params: Gen[List[Expression]] = Gen.resize(4, Gen.listOf(expression))
+  def params: Gen[List[Expression]] = Gen.resize(4, Gen.listOf(expression(0)))
 
   //todo (grek): implement generation of all literals
   def literal: Gen[Literal] = {
@@ -62,28 +62,24 @@ object Generators {
     r <- returnType
   } yield Signature(on, n, paramTypes, r)
   
-  def newCall: Gen[NewCall] = for (s <- signature; p <- params) yield NewCall(s, p)
-  def methodCall: Gen[MethodCall] =
+  def newCall(implicit depth: Int): Gen[NewCall] = for (s <- signature; p <- params) yield NewCall(s, p)
+  def methodCall(implicit depth: Int): Gen[MethodCall] =
     for (on <- expression; s <- signature; p <- params) yield MethodCall(on, s, p)
-  def staticMethodCall: Gen[StaticMethodCall] =
+  def staticMethodCall(implicit depth: Int): Gen[StaticMethodCall] =
     for (c <- ref; s <- signature; p <- params) yield StaticMethodCall(c, s, p)
 
-  def expression: Gen[Expression] =
-    {
-      Gen.frequency(
-        (5, literal),
-        (1, varRef),
-        (1, ThisRef),
-        (1, Gen.lzy(newCall)),
-        (1, Gen.lzy(methodCall)),
-        (1, Gen.lzy(staticMethodCall))
-      )
-    }
+  def expression(implicit depth: Int): Gen[Expression] = {
+    val nonRecursive = Gen.frequency((2, literal), (1, varRef), (1, Gen.value(ThisRef)))
+    val recursive = Gen.oneOf(Gen.lzy(newCall(depth+1)), Gen.lzy(methodCall(depth+1)),
+      Gen.lzy(staticMethodCall(depth+1)))
 
-  def varDef: Gen[VarDef] = for (t <- typ; n <- identifier; v <- expression) yield VarDef(t, n, v)
-  def assignment: Gen[Assignment] = for (n <- identifier; v <- expression) yield Assignment(n, v)
+    Gen.frequency((depth+1, nonRecursive), (1, recursive))
+  }
 
-  def methodStatement: Gen[MethodStatement] = Gen.oneOf(varDef, assignment, expression)
+  def varDef: Gen[VarDef] = for (t <- typ; n <- identifier; v <- expression(0)) yield VarDef(t, n, v)
+  def assignment: Gen[Assignment] = for (n <- identifier; v <- expression(0)) yield Assignment(n, v)
+
+  def methodStatement: Gen[MethodStatement] = Gen.oneOf(varDef, assignment, expression(0))
   def methodStatements: Gen[List[MethodStatement]] = Gen.listOf(methodStatement)
 
   def constructorSuperCall: Gen[SuperConstructorCall] =
@@ -147,10 +143,10 @@ object Generators {
   implicit val arbParamsDef = Arbitrary(paramsDef)
   implicit val arbLiteral = Arbitrary(literal)
   implicit val arbSignature = Arbitrary(signature)
-  implicit val arbNewCall = Arbitrary(newCall)
-  implicit val arbMethodCall = Arbitrary(methodCall)
-  implicit val arbStaticMethodCall = Arbitrary(staticMethodCall)
-  implicit val arbExpression = Arbitrary(expression)
+  implicit val arbNewCall = Arbitrary(newCall(0))
+  implicit val arbMethodCall = Arbitrary(methodCall(0))
+  implicit val arbStaticMethodCall = Arbitrary(staticMethodCall(0))
+  implicit val arbExpression = Arbitrary(expression(0))
   implicit val arbVarDef = Arbitrary(varDef)
   implicit val arbAssignment = Arbitrary(assignment)
   implicit val arbMethodStatement = Arbitrary(methodStatement)
