@@ -152,9 +152,9 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
       case condition ~ then ~ elsee => If(condition, then, elsee)
     }
 
-  def conditional: Parser[Conditional] = (expression <~ ws <~ "?") ~! (ws ~> expression) ~!
+  def conditional: Parser[Conditional] = (expression <~ ws <~ "?") ~! ("(" ~> typ <~ ")") ~! (ws ~> expression) ~!
           (ws ~> ":" ~> ws ~> expression) ^^ {
-    case condition ~ then ~ elsee => Conditional(condition, then, elsee)
+    case condition ~ typ ~ then ~ elsee => Conditional(condition, typ, then, elsee)
   }
 
   def expression: Parser[Expression] = {

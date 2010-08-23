@@ -69,9 +69,10 @@ object Generators {
     for (c <- ref; s <- signature; p <- params) yield StaticMethodCall(c, s, p)
   def conditional(implicit depth: Int): Gen[Conditional] = for {
     condition <- expression
+    typ <- typ
     then <- expression
     elsee <- expression
-  } yield Conditional(condition, then, elsee)
+  } yield Conditional(condition, typ, then, elsee)
 
   def expression(implicit depth: Int): Gen[Expression] = {
     val nonRecursive = Gen.frequency((2, literal), (1, varRef), (1, Gen.value(ThisRef)))

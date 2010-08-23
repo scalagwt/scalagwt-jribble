@@ -98,7 +98,7 @@ case class StaticMethodCall(classRef: Ref, signature: Signature, params: List[Ex
   def jparams: JList[Expression] = params
 }
 
-case class Conditional(condition: Expression, then: Expression, elsee: Expression) extends Expression
+case class Conditional(condition: Expression, typ: Type, then: Expression, elsee: Expression) extends Expression
 
 sealed abstract class Type extends AST
 case class Ref(pkg: Option[Package], name: String) extends Type {

@@ -95,7 +95,7 @@ trait Printers {
   }
 
   implicit object ConditionalPrinter extends Printer[Conditional] {
-    def apply(x: Conditional) = ExpressionPrinter(x.condition) + " ? " +
+    def apply(x: Conditional) = ExpressionPrinter(x.condition) + " ?(" + TypePrinter(x.typ) + ") " +
             ExpressionPrinter(x.then) + " : " + ExpressionPrinter(x.elsee)
   }
 
