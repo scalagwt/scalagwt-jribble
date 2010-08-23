@@ -106,8 +106,13 @@ object Generators {
   def block: Gen[Block[MethodStatement]] = methodStatements map (Block(_))
   def methodBody: Gen[Block[MethodStatement]] = block
   def returnType = typ | Void
+  def methodModifiers: Gen[Set[String]] = {
+    val modif = Gen.oneOf("public", "final", "static")
+    Gen.resize(3, Gen.listOf(modif)).map(_.toSet)
+  }
   def methodDef: Gen[MethodDef] =
-    for (t <- returnType; n <- identifier; p <- paramsDef; b <- methodBody) yield MethodDef(t, n, p, b)
+    for (m <- methodModifiers; t <- returnType; n <- identifier; p <- paramsDef; b <- methodBody) yield
+      MethodDef(m, t, n, p, b)
 
   def classModifiers: Gen[Set[String]] = {
     val modif = Gen.oneOf("public", "final")

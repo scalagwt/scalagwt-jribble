@@ -81,7 +81,7 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
 
   def interfaceBody: Parser[List[MethodDef]] = {
     val methodDef = this.methodDef into {
-      case x @ MethodDef(_, _, _, body) if body.statements.isEmpty => success(x)
+      case x : MethodDef if x.body.statements.isEmpty => success(x)
       case x => failure("Method definition should have an empty body.")
     }
     "{" ~> ignoreWsLF ~> ((ignoreWsLF ~> methodDef <~ ignoreWsLF)*) <~ "}"
@@ -130,9 +130,13 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     case name ~ paramsDef ~ body => Constructor(name, paramsDef, body)
   }
 
-  //todo (grek): hard-coded "public"
-  def methodDef: Parser[MethodDef] = ("public" ~> ws ~> returnType <~ ws) ~! name ~! (paramsDef <~ ws) ~! methodBody ^^ {
-    case returnType ~ name ~ paramsDef ~ body => MethodDef(returnType, name, paramsDef, body)
+  val methodModifs: Parser[Set[String]] = {
+    val allowed = Set("public", "final", "static")
+    modifs(allowed).map(_.toSet)
+  }
+
+  def methodDef: Parser[MethodDef] = (methodModifs ~ returnType <~ ws) ~! name ~! (paramsDef <~ ws) ~! methodBody ^^ {
+    case modifs ~ returnType ~ name ~ paramsDef ~ body => MethodDef(modifs, returnType, name, paramsDef, body)
   }
 
   def returnType: Parser[Type] = typ | ("V" ^^^ Void)

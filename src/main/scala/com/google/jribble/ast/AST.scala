@@ -46,7 +46,8 @@ case class Constructor(name: String, params: List[ParamDef], body: Block[Constru
   def jparams: JList[ParamDef] = params
   def signature(enclosing: Ref) = Signature(enclosing, enclosing.name, params.map(_.typ), Void)
 }
-case class MethodDef(returnType: Type, name: String, params: List[ParamDef], body: Block[MethodStatement]) extends AST {
+case class MethodDef(modifs: Set[String], returnType: Type, name: String, params: List[ParamDef],
+                     body: Block[MethodStatement]) extends AST {
   def jparams: JList[ParamDef] = params
   def signature(enclosing: Ref) = Signature(enclosing, name, params.map(_.typ), returnType)
 }

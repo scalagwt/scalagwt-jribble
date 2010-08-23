@@ -149,7 +149,7 @@ trait Printers {
 
   implicit object MethodDefPrinter extends Printer[MethodDef] {
     def apply(x: MethodDef) =
-      "public " + TypePrinter(x.returnType) + " " + x.name + ParamsDefPrinter(x.params) + " " +
+      x.modifs.map(_ + " ").mkString + TypePrinter(x.returnType) + " " + x.name + ParamsDefPrinter(x.params) + " " +
               BlockPrinter(x.body) + "\n" 
   }
 
