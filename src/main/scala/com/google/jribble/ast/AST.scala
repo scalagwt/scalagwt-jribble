@@ -42,35 +42,32 @@ case class InterfaceDef(modifs: Set[String], name: Ref, ext: Option[Ref], body: 
 
 case class ParamDef(name: String, typ: Type) extends AST
 
-case class Constructor(name: String, params: List[ParamDef], body: Block[ConstructorStatement]) extends AST {
+case class Constructor(name: String, params: List[ParamDef], body: Block) extends AST {
   def jparams: JList[ParamDef] = params
   def signature(enclosing: Ref) = Signature(enclosing, enclosing.name, params.map(_.typ), Void)
 }
 case class MethodDef(modifs: Set[String], returnType: Type, name: String, params: List[ParamDef],
-                     body: Block[MethodStatement]) extends AST {
+                     body: Block) extends AST {
   def jparams: JList[ParamDef] = params
   def signature(enclosing: Ref) = Signature(enclosing, name, params.map(_.typ), returnType)
 }
 
-case class Block[T <: Statement](statements: List[T]) {
-  def jstatements: JList[T] = statements
+case class Block(statements: List[Statement]) {
+  def jstatements: JList[Statement] = statements
 }
 
 sealed abstract class Statement extends AST
-sealed trait ConstructorStatement extends Statement
-sealed abstract class MethodStatement extends Statement with ConstructorStatement
-case class VarDef(typ: Type, name: String, value: Expression) extends MethodStatement
-case class Assignment(name: String, value: Expression) extends MethodStatement
+case class VarDef(typ: Type, name: String, value: Expression) extends Statement
+case class Assignment(name: String, value: Expression) extends Statement
 //TODO(grek): by using Block[MethodStatement] we are making it impossible to call super constructors from
 //blocks in if statements. Not sure if this is important.
-case class If(condition: Expression, then: Block[MethodStatement], elsee: Option[Block[MethodStatement]])
-        extends MethodStatement
+case class If(condition: Expression, then: Block, elsee: Option[Block]) extends Statement
 
-case class SuperConstructorCall(signature: Signature, params: List[Expression]) extends ConstructorStatement {
+case class SuperConstructorCall(signature: Signature, params: List[Expression]) extends Statement {
   def jparams: JList[Expression] = params
 }
 
-sealed abstract class Expression extends MethodStatement
+sealed abstract class Expression extends Statement
 
 sealed abstract class Literal extends Expression
 case class BooleanLiteral(v: Boolean) extends Literal

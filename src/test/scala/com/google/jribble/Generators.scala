@@ -87,25 +87,25 @@ object Generators {
   def ifStatement: Gen[If] = for {
     condition <- expression(0);
     then <- block;
-    elsee <- Arbitrary.arbitrary[Option[Block[MethodStatement]]]
+    elsee <- Arbitrary.arbitrary[Option[Block]]
   } yield If(condition, then, elsee)
 
 
-  def methodStatement: Gen[MethodStatement] = Gen.oneOf(varDef, assignment, expression(0))
-  def methodStatements: Gen[List[MethodStatement]] = Gen.listOf(methodStatement)
+  def methodStatement: Gen[Statement] = Gen.oneOf(varDef, assignment, expression(0))
+  def methodStatements: Gen[List[Statement]] = Gen.listOf(methodStatement)
 
   def constructorSuperCall: Gen[SuperConstructorCall] =
     for (s <- signature; p <- params) yield SuperConstructorCall(s, p)
   //we shuffle the list because in jribble there is no requirement that super constructor call is
-  def constructorBody: Gen[Block[ConstructorStatement]] = for {
+  def constructorBody: Gen[Block] = for {
       s <- Gen.resize(1, Gen.listOf(constructorSuperCall))
       ss <- methodStatements
     } yield Block(scala.util.Random.shuffle(s ::: ss))
   def constructor: Gen[Constructor] =
     for (n <- identifier; p <- paramsDef; b <- constructorBody) yield Constructor(n, p, b)
 
-  def block: Gen[Block[MethodStatement]] = methodStatements map (Block(_))
-  def methodBody: Gen[Block[MethodStatement]] = block
+  def block: Gen[Block] = methodStatements map (Block(_))
+  def methodBody: Gen[Block] = block
   def returnType = typ | Void
   def methodModifiers: Gen[Set[String]] = {
     val modif = Gen.oneOf("public", "final", "static")
@@ -170,8 +170,7 @@ object Generators {
   implicit val arbAssignment = Arbitrary(assignment)
   implicit val arbIf = Arbitrary(ifStatement)
   implicit val arbMethodStatement = Arbitrary(methodStatement)
-  implicit val arbMethodBody = Arbitrary(methodBody)
-  implicit val arbConstructorStatements = Arbitrary(constructorBody) 
+  implicit val arbMethodBody = Arbitrary(methodBody) 
   implicit val arbConstructor = Arbitrary(constructor)
   implicit val arbMethodDef = Arbitrary(methodDef)
   implicit val arbClassDef = Arbitrary(classDef)

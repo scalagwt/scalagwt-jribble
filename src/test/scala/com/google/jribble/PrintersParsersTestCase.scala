@@ -69,7 +69,7 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
 
   property("methodBody") = checkIdentityEqual(printers.BlockPrinter andThen parsers.methodBody)
 
-  property("constructorBody") = checkIdentityEqual(printers.ConstructorBodyPrinter andThen parsers.constructorBody)
+  property("constructorBody") = checkIdentityEqual(printers.BlockPrinter andThen parsers.constructorBody)
 
   property("constructor") = checkIdentityEqual(printers.ConstructorPrinter andThen parsers.constructor)
 

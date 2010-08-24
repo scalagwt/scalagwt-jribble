@@ -110,9 +110,9 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
   def statements[T <: Statement](statement: Parser[T]): Parser[List[T]] =
     (("{" ~ ignoreWsLF ~ "}") ^^^ List()) | ("{" ~> (((ignoreWsLF ~> statement) <~ ignoreWsLF)+) <~ "}")
 
-  def block: Parser[Block[MethodStatement]] = statements(methodStatement) ^^ (Block(_))
+  def block: Parser[Block] = statements(methodStatement) ^^ (Block(_))
 
-  def methodBody: Parser[Block[MethodStatement]] = block
+  def methodBody: Parser[Block] = block
 
   def superConstructorCallStatement: Parser[SuperConstructorCall] = {
     val superSignature = signature into {
@@ -121,7 +121,7 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     }
     (superSignature ~ params <~ ";") ^^ { case signature ~ params => SuperConstructorCall(signature, params) }
   }
-  def constructorBody: Parser[Block[ConstructorStatement]] =
+  def constructorBody: Parser[Block] =
     statements(superConstructorCallStatement | methodStatement) ^^ (Block(_))
 
   //todo (grek): hard-coded "public"
@@ -145,7 +145,7 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     case typ ~ ident ~ expression => VarDef(typ, ident, expression)
   }
 
-  def methodStatement: Parser[MethodStatement] = ifStatement | ((varDef | assignment | expression) <~ ";")
+  def methodStatement: Parser[Statement] = ifStatement | ((varDef | assignment | expression) <~ ";")
 
   def ifStatement: Parser[If] =
     ("if" ~> ws ~> "(" ~> expression <~ ")") ~! (ignoreWsLF ~> block) ~ ((ignoreWsLF ~> "else" ~> ws ~> block)?) ^^ {
