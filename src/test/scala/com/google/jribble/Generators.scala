@@ -79,7 +79,7 @@ object Generators {
     val recursive = Gen.oneOf(Gen.lzy(newCall(depth+1)), Gen.lzy(methodCall(depth+1)),
       Gen.lzy(staticMethodCall(depth+1)), Gen.lzy(conditional))
 
-    Gen.frequency((depth+1, nonRecursive), (1, recursive))
+    Gen.frequency((2*(depth+1), nonRecursive), (1, recursive))
   }
 
   def varDef: Gen[VarDef] = for (t <- typ; n <- identifier; v <- expression(0)) yield VarDef(t, n, v)
@@ -95,7 +95,7 @@ object Generators {
   def methodStatements: Gen[List[Statement]] = Gen.listOf(methodStatement)
 
   def constructorSuperCall: Gen[SuperConstructorCall] =
-    for (s <- signature; p <- params) yield SuperConstructorCall(s, p)
+    for (s <- signature; p <- params) yield SuperConstructorCall(s.copy(name = "super"), p)
   //we shuffle the list because in jribble there is no requirement that super constructor call is
   def constructorBody: Gen[Block] = for {
       s <- Gen.resize(1, Gen.listOf(constructorSuperCall))

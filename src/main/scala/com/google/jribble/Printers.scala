@@ -64,9 +64,10 @@ trait Printers {
   //todo (grek): implement printing of literals
   implicit object LiteralPrinter extends Printer[Literal] {
     def apply(x: Literal) = x match {
-      case CharLiteral(v) => "'" + x + "'"
+      case CharLiteral(v) => "'" + v + "'"
       //todo (grek): implement escaping
       case StringLiteral(v) => "\"" + v + "\""
+      case BooleanLiteral(v) => v.toString
       case _ => error("to be implemented")
     }
   }
@@ -95,8 +96,8 @@ trait Printers {
   }
 
   implicit object ConditionalPrinter extends Printer[Conditional] {
-    def apply(x: Conditional) = ExpressionPrinter(x.condition) + " ?(" + TypePrinter(x.typ) + ") " +
-            ExpressionPrinter(x.then) + " : " + ExpressionPrinter(x.elsee)
+    def apply(x: Conditional) = "(" + ExpressionPrinter(x.condition) + " ?(" + TypePrinter(x.typ) + ") " +
+            ExpressionPrinter(x.then) + " : " + ExpressionPrinter(x.elsee) + ")"
   }
 
   implicit object ExpressionPrinter extends Printer[Expression] {
@@ -112,7 +113,7 @@ trait Printers {
   }
 
   implicit object SuperConstructorCall extends Printer[SuperConstructorCall] {
-    def apply(x: SuperConstructorCall) = "super" + ParamsPrinter(x.params)
+    def apply(x: SuperConstructorCall) = SignaturePrinter(x.signature) + ParamsPrinter(x.params)
   }
 
   implicit object IfPrinter extends Printer[If] {

@@ -152,8 +152,8 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
       case condition ~ then ~ elsee => If(condition, then, elsee)
     }
 
-  def conditional: Parser[Conditional] = (expression <~ ws <~ "?") ~! ("(" ~> typ <~ ")") ~! (ws ~> expression) ~!
-          (ws ~> ":" ~> ws ~> expression) ^^ {
+  def conditional: Parser[Conditional] = "(" ~> (expression <~ ws <~ "?") ~! ("(" ~> typ <~ ")") ~!
+          (ws ~> expression) ~! (ws ~> ":" ~> ws ~> expression) <~ ")" ^^ {
     case condition ~ typ ~ then ~ elsee => Conditional(condition, typ, then, elsee)
   }
 
@@ -165,7 +165,7 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     val varRef: Parser[VarRef] = ident ^^ (VarRef)
     //all possible types of expression on which method can be called, note that method called on "this" instance
     //must be prefixed with this
-    val callTarget = ("(" ~> conditional <~ ")") | literal | newCall | staticCall | thisRef | varRef 
+    val callTarget = conditional | literal | newCall | staticCall | thisRef | varRef 
     (callTarget ~ (methodCall *)) ^^ {
       case on ~ calls => {
         //todo (grek): this fragment even if involves simple folding of calls might be slightly dense and might deserve
