@@ -16,18 +16,19 @@
 package com.google.jribble
 
 import com.google.jribble.ast._
-import org.scalacheck.{Arbitrary, Prop, Properties}
+import org.scalacheck.{Shrink, Arbitrary, Prop, Properties}
 
 object PrintersParsersTestCase extends Properties("formatAndParseField") {
   import Generators._
+  import Shrinkers._
 
   val parsers: Parsers = new Parsers {}
   val printers: Printers = new Printers {}
 
-  def checkEqual[T: Arbitrary,U](f: T => U, g: T => U) =
+  def checkEqual[T: Arbitrary: Shrink,U](f: T => U, g: T => U) =
     Prop.forAll((x: T) => f(x) == g(x))
 
-  def checkPrinterParser[T: Arbitrary](printer: printers.Printer[T], parser: parsers.Parser[T]) =
+  def checkPrinterParser[T: Arbitrary: Shrink](printer: printers.Printer[T], parser: parsers.Parser[T]) =
     checkEqual(printer andThen liftParser(parser), Left(_: T))
 
   implicit def liftParser[T](p: parsers.Parser[T]): String => Either[T,String] =
