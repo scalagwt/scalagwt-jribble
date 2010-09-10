@@ -18,6 +18,7 @@ package com.google.jribble
 
 import com.google.jribble.ast._
 import scala.util.parsing.combinator.syntactical.StdTokenParsers
+import scala.util.parsing.combinator.ImplicitConversions
 
 /**
  * Collection of jribble parsers.
@@ -25,7 +26,7 @@ import scala.util.parsing.combinator.syntactical.StdTokenParsers
  * All String literals occuring in Parser definition are either Keywords or delimiters (also represented as Keyword
  * token).
  */
-trait Parsers extends StdTokenParsers {
+trait Parsers extends StdTokenParsers with ImplicitConversions {
 
   type Tokens = Lexer
   val lexical = new Tokens
@@ -35,8 +36,6 @@ trait Parsers extends StdTokenParsers {
   lexical.delimiters ++= Parsers.delimiters
 
   import lexical.{Keyword, Identifier}
-
-  //private val ident: Parser[String] = "[a-zA-Z][a-zA-Z0-9_]*".r
 
   def modifs(allowed: Set[String]): Parser[List[String]] =
     rep(accept("modifier", { case Keyword(x) if allowed contains x => x }))
@@ -57,9 +56,7 @@ trait Parsers extends StdTokenParsers {
     }
 
   val interfaceDef: Parser[InterfaceDef] = ((interfaceModifs <~ "interface") ~! ref ~!
-            opt(extendsDef) ~! interfaceBody) ^^ {
-      case modifs ~ interfaceRef ~ ext ~ body => InterfaceDef(modifs, interfaceRef, ext, body)
-    }
+            opt(extendsDef) ~! interfaceBody) ^^ InterfaceDef
 
   def name: Parser[String] = accept("identifier", { case Identifier(x) => x})
 
@@ -130,39 +127,30 @@ trait Parsers extends StdTokenParsers {
     statements(superConstructorCallStatement | methodStatement) ^^ (Block(_))
 
   //todo (grek): hard-coded "public"
-  def constructor: Parser[Constructor] = ("public" ~> name ~ paramsDef) ~! constructorBody ^^ {
-    //todo (grek): should we check if the name of enclosing class watches constructor's name?
-    case name ~ paramsDef ~ body => Constructor(name, paramsDef, body)
-  }
+  //todo (grek): should we check if the name of enclosing class watches constructor's name?
+  def constructor: Parser[Constructor] = ("public" ~> name ~ paramsDef) ~! constructorBody ^^ Constructor
 
   val methodModifs: Parser[Set[String]] = {
     val allowed = Set("public", "final", "static")
     modifs(allowed).map(_.toSet)
   }
 
-  def methodDef: Parser[MethodDef] = methodModifs ~ returnType ~! name ~! paramsDef ~! methodBody ^^ {
-    case modifs ~ returnType ~ name ~ paramsDef ~ body => MethodDef(modifs, returnType, name, paramsDef, body)
-  }
+  def methodDef: Parser[MethodDef] = methodModifs ~ returnType ~! name ~! paramsDef ~! methodBody ^^ MethodDef
+
 
   def VoidType: Parser[Type] = (Identifier("V") ~! ";" ^^^ Void)
 
   def returnType: Parser[Type] =   VoidType | typ
 
-  def varDef: Parser[VarDef] = typ ~ (ident <~ "=") ~ expression ^^ {
-    case typ ~ ident ~ expression => VarDef(typ, ident, expression)
-  }
+  def varDef: Parser[VarDef] = typ ~ (ident <~ "=") ~ expression ^^ VarDef
 
   def methodStatement: Parser[Statement] = ifStatement | ((varDef | assignment | expression) <~ ";")
 
   def ifStatement: Parser[If] =
-    ("if" ~> "(" ~> expression <~ ")") ~! block ~ opt("else" ~> block) ^^ {
-      case condition ~ then ~ elsee => If(condition, then, elsee)
-    }
+    ("if" ~> "(" ~> expression <~ ")") ~! block ~ opt("else" ~> block) ^^ If
 
   def conditional: Parser[Conditional] = "(" ~> (expression <~ "?") ~! ("(" ~> typ <~ ")") ~! expression ~!
-          (":" ~> expression) <~ ")" ^^ {
-    case condition ~ typ ~ then ~ elsee => Conditional(condition, typ, then, elsee)
-  }
+          (":" ~> expression) <~ ")" ^^ Conditional
 
   def expression: Parser[Expression] = {
     val staticCall: Parser[StaticMethodCall] = (ref ~ methodCall) ^^ {
@@ -190,15 +178,11 @@ trait Parsers extends StdTokenParsers {
   }
 
   def signature: Parser[Signature] = "(" ~> ((ref <~ "::") ~ name) ~!
-          ("(" ~> (typ *) <~ ")") ~! returnType <~ ")" ^^ {
-    case on ~ name ~ paramTypes ~ returnType => Signature(on, name, paramTypes, returnType)
-  }
+          ("(" ~> (typ *) <~ ")") ~! returnType <~ ")" ^^ Signature
 
   def methodCall: Parser[Signature ~ List[Expression]] = "." ~> signature ~! params
 
-  def newCall: Parser[NewCall] = ("new" ~> signature ~! params) ^^ {
-    case signature ~ params => NewCall(signature, params)
-  }
+  def newCall: Parser[NewCall] = ("new" ~> signature ~! params) ^^ NewCall
 
   def params: Parser[List[Expression]] = {
     val noParams: Parser[List[Expression]] = "(" ~ ")" ^^^ List()
@@ -208,9 +192,7 @@ trait Parsers extends StdTokenParsers {
 
   def varRef = ident
 
-  def assignment: Parser[Assignment] = ident ~ ("=" ~> expression) ^^ {
-    case ident ~ expression => Assignment(ident, expression)
-  }
+  def assignment: Parser[Assignment] = ident ~ ("=" ~> expression) ^^ Assignment
 
   //todo (grek): implement parsing of all literals, recheck what we already have and make it less hacky
   def literal: Parser[Literal] = {
