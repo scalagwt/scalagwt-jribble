@@ -32,7 +32,7 @@ trait Printers {
   }
 
   implicit object PrimitivePrinter extends Printer[Primitive] {
-    def apply(x: Primitive) = x.name
+    def apply(x: Primitive) = x.name + ";"
   }
 
   implicit object ArrayPrinter extends Printer[Array] {
@@ -44,7 +44,7 @@ trait Printers {
       case x: Ref => RefPrinter(x)
       case x: Primitive => PrimitivePrinter(x)
       case x: Array => ArrayPrinter(x)
-      case Void => "V"
+      case Void => "V;"
     }
   }
 

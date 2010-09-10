@@ -17,22 +17,29 @@
 package com.google.jribble
 
 import com.google.jribble.ast._
+import scala.util.parsing.combinator.syntactical.StdTokenParsers
 
-trait Parsers extends scala.util.parsing.combinator.RegexParsers {
+/**
+ * Collection of jribble parsers.
+ *
+ * All String literals occuring in Parser definition are either Keywords or delimiters (also represented as Keyword
+ * token).
+ */
+trait Parsers extends StdTokenParsers {
 
-  override val skipWhitespace = false
+  type Tokens = Lexer
+  val lexical = new Tokens
 
-  private val ident: Parser[String] = "[a-zA-Z][a-zA-Z0-9_]*".r
+  lexical.reserved ++= Parsers.reserved
 
-  def modifs(allowed: Set[String]): Parser[List[String]] = {
-    val modif = ident into { x =>
-      if (allowed contains x)
-        success(x)
-      else
-        failure("Modifier can be only one of " + allowed)
-    }
-    ((modif <~ ws) *)
-  }
+  lexical.delimiters ++= Parsers.delimiters
+
+  import lexical.{Keyword, Identifier}
+
+  //private val ident: Parser[String] = "[a-zA-Z][a-zA-Z0-9_]*".r
+
+  def modifs(allowed: Set[String]): Parser[List[String]] =
+    rep(accept("modifier", { case Keyword(x) if allowed contains x => x }))
 
   val classModifs: Parser[Set[String]] = {
     val allowed = Set("public", "final")
@@ -44,21 +51,22 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     modifs(allowed).map(_.toSet)
   }
 
-  val classDef: Parser[ClassDef] = ((classModifs <~ "class" <~ ws) ~! (ref <~ ws) ~!
-            ((extendsDef <~ ws)?) ~! ((implementsDef <~ ws)?) ~! classBody) ^^ {
+  val classDef: Parser[ClassDef] = ((classModifs <~ "class") ~! ref ~! opt(extendsDef) ~!
+          opt(implementsDef) ~! classBody) ^^ {
       case modifs ~ classRef ~ ext ~ impl ~ body => ClassDef(modifs, classRef, ext, impl.getOrElse(Nil), body)
     }
 
-  val interfaceDef: Parser[InterfaceDef] = ((interfaceModifs <~ "interface" <~ ws) ~! (ref <~ ws) ~!
-            ((extendsDef <~ ws)?) ~! interfaceBody) ^^ {
+  val interfaceDef: Parser[InterfaceDef] = ((interfaceModifs <~ "interface") ~! ref ~!
+            opt(extendsDef) ~! interfaceBody) ^^ {
       case modifs ~ interfaceRef ~ ext ~ body => InterfaceDef(modifs, interfaceRef, ext, body)
     }
 
-  def name: Parser[String] = "[a-zA-Z$][a-zA-Z0-9_$]*".r
+  def name: Parser[String] = accept("identifier", { case Identifier(x) => x})
 
-  def coord: Parser[List[String]] = name ~ (("/" ~> name)*) ^^ { case x ~ xs => x :: xs }
-
-  def ref: Parser[Ref] = ("L" ~> coord <~ ";") ^^ { xs =>
+  def ref: Parser[Ref] = ((rep1sep(name, "/") <~";") into {
+    case x :: xs if x.startsWith("L") => success((x drop 1) :: xs)
+    case _ => failure("Reference must start with 'L'")
+  }) ^^ { xs =>
     val pkg = xs.init match {
       case Nil => None
       case xs => Some(Package(xs mkString "/"))
@@ -66,17 +74,14 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     Ref(pkg, xs.last)
   }
 
-  def extendsDef: Parser[Ref] = "extends" ~> ws ~> ref
+  def extendsDef: Parser[Ref] = "extends" ~> ref
 
-  def implementsDef: Parser[List[Ref]] = "implements" ~> ws ~> ref ~(("," ~> ws ~> ref)*) ^^ {
-    case x ~ xs => x :: xs
-  }
+  def implementsDef: Parser[List[Ref]] = "implements" ~> rep1sep(ref, ",")
 
   def classBody: Parser[List[Either[Constructor, MethodDef]]] = {
     val constructor = this.constructor ^^ (Left(_))
     val methodDef = this.methodDef ^^ (Right(_))
-    val bodyElement = constructor | methodDef
-    "{" ~> ignoreWsLF ~> ((ignoreWsLF ~> bodyElement <~ ignoreWsLF)*) <~ "}"
+    "{" ~> rep(constructor | methodDef) <~ "}"
   }
 
   def interfaceBody: Parser[List[MethodDef]] = {
@@ -84,13 +89,16 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
       case x : MethodDef if x.body.statements.isEmpty => success(x)
       case x => failure("Method definition should have an empty body.")
     }
-    "{" ~> ignoreWsLF ~> ((ignoreWsLF ~> methodDef <~ ignoreWsLF)*) <~ "}"
+    "{" ~> rep(methodDef) <~ "}"
   }
 
-  // BOOLEAN | BYTE | CHAR | DOUBLE | FLOAT | INT | LONG | SHORT
   //todo (grek): introduce separate nodes for all primitive types
-  def primitive: Parser[Primitive] = ("Z" | "B" | "C" | "D" | "F" | "I" | "J" | "S") ^^ (Primitive(_))
-  def array: Parser[Array] = ((primitive | ref) ~ (literal("[")+)) ^^ {
+  def primitive: Parser[Primitive] = {
+    // BOOLEAN | BYTE | CHAR | DOUBLE | FLOAT | INT | LONG | SHORT
+    val allowed = List("Z", "B", "C", "D", "F", "I", "J", "S")
+    accept("primitive type", { case Identifier(x) if allowed contains x => Primitive(x)}) <~ ";"
+  }
+  def array: Parser[Array] = (primitive | ref) ~ rep1(Keyword("[")) ^^ {
     case typ ~ xs => {
       def iterateTimes[T](f: T => T, v: T, n: Int): T = if (n <= 0) v else f(iterateTimes(f, v, n-1))
       Array(iterateTimes(Array: (Type => Type), typ, xs.length-1))
@@ -99,33 +107,30 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
   def typ: Parser[Type] = array | primitive | ref
 
   def paramsDef: Parser[List[ParamDef]] = {
-    val paramDef: Parser[ParamDef] = ((typ <~ ws) ~ name) ^^ { case t ~ i => ParamDef(i, t) }
-    val noParams: Parser[List[ParamDef]] = "()" ^^^ List()
-    val atLeastOneParam = ("(" ~> paramDef ~ (("," ~> ws ~> paramDef)*) <~ ")") ^^ {
-      case x ~ xs => x :: xs
-    }
+    val paramDef: Parser[ParamDef] = typ ~ name ^^ { case t ~ i => ParamDef(i, t) }
+    val noParams: Parser[List[ParamDef]] = "(" ~ ")" ^^^ List()
+    val atLeastOneParam = "(" ~> rep1sep(paramDef, ",") <~ ")"
     noParams | atLeastOneParam
   }
 
   def statements[T <: Statement](statement: Parser[T]): Parser[List[T]] =
-    (("{" ~ ignoreWsLF ~ "}") ^^^ List()) | ("{" ~> (((ignoreWsLF ~> statement) <~ ignoreWsLF)+) <~ "}")
+    "{" ~> rep(statement) <~ "}"
 
   def block: Parser[Block] = statements(methodStatement) ^^ (Block(_))
 
   def methodBody: Parser[Block] = block
 
   def superConstructorCallStatement: Parser[SuperConstructorCall] = {
-    val superSignature = signature into {
-      case s @ Signature(_, name, _, _) if name == "super" => success(s)
-      case s => failure("Super call must have 'super' as name of a method in singature.")
+    val superSignature = "(" ~> ((ref <~ "::") <~ "super") ~! ("(" ~> (typ *) <~ ")") ~! VoidType <~ ")" ^^ {
+      case on ~ paramTypes ~ returnType => Signature(on, "super", paramTypes, returnType)
     }
-    (superSignature ~ params <~ ";") ^^ { case signature ~ params => SuperConstructorCall(signature, params) }
+    (superSignature ~! params <~ ";") ^^ { case signature ~ params => SuperConstructorCall(signature, params) }
   }
   def constructorBody: Parser[Block] =
     statements(superConstructorCallStatement | methodStatement) ^^ (Block(_))
 
   //todo (grek): hard-coded "public"
-  def constructor: Parser[Constructor] = ("public" ~> ws ~> name ~ paramsDef) ~! (ws ~> constructorBody) ^^ {
+  def constructor: Parser[Constructor] = ("public" ~> name ~ paramsDef) ~! constructorBody ^^ {
     //todo (grek): should we check if the name of enclosing class watches constructor's name?
     case name ~ paramsDef ~ body => Constructor(name, paramsDef, body)
   }
@@ -135,25 +140,27 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     modifs(allowed).map(_.toSet)
   }
 
-  def methodDef: Parser[MethodDef] = (methodModifs ~ returnType <~ ws) ~! name ~! (paramsDef <~ ws) ~! methodBody ^^ {
+  def methodDef: Parser[MethodDef] = methodModifs ~ returnType ~! name ~! paramsDef ~! methodBody ^^ {
     case modifs ~ returnType ~ name ~ paramsDef ~ body => MethodDef(modifs, returnType, name, paramsDef, body)
   }
 
-  def returnType: Parser[Type] = typ | ("V" ^^^ Void)
+  def VoidType: Parser[Type] = (Identifier("V") ~! ";" ^^^ Void)
 
-  def varDef: Parser[VarDef] = typ ~ ((ws ~> ident) <~ (ws ~ "=" ~ ws)) ~ expression ^^ {
+  def returnType: Parser[Type] =   VoidType | typ
+
+  def varDef: Parser[VarDef] = typ ~ (ident <~ "=") ~ expression ^^ {
     case typ ~ ident ~ expression => VarDef(typ, ident, expression)
   }
 
   def methodStatement: Parser[Statement] = ifStatement | ((varDef | assignment | expression) <~ ";")
 
   def ifStatement: Parser[If] =
-    ("if" ~> ws ~> "(" ~> expression <~ ")") ~! (ignoreWsLF ~> block) ~ ((ignoreWsLF ~> "else" ~> ws ~> block)?) ^^ {
+    ("if" ~> "(" ~> expression <~ ")") ~! block ~ opt("else" ~> block) ^^ {
       case condition ~ then ~ elsee => If(condition, then, elsee)
     }
 
-  def conditional: Parser[Conditional] = "(" ~> (expression <~ ws <~ "?") ~! ("(" ~> typ <~ ")") ~!
-          (ws ~> expression) ~! (ws ~> ":" ~> ws ~> expression) <~ ")" ^^ {
+  def conditional: Parser[Conditional] = "(" ~> (expression <~ "?") ~! ("(" ~> typ <~ ")") ~! expression ~!
+          (":" ~> expression) <~ ")" ^^ {
     case condition ~ typ ~ then ~ elsee => Conditional(condition, typ, then, elsee)
   }
 
@@ -182,48 +189,59 @@ trait Parsers extends scala.util.parsing.combinator.RegexParsers {
     }
   }
 
-  def signature: Parser[Signature] = "(" ~> ((ref <~ "::") ~ name) ~! ("(" ~> (typ *) <~ ")") ~! returnType <~ ")" ^^ {
+  def signature: Parser[Signature] = "(" ~> ((ref <~ "::") ~ name) ~!
+          ("(" ~> (typ *) <~ ")") ~! returnType <~ ")" ^^ {
     case on ~ name ~ paramTypes ~ returnType => Signature(on, name, paramTypes, returnType)
   }
 
   def methodCall: Parser[Signature ~ List[Expression]] = "." ~> signature ~! params
 
-  def newCall: Parser[NewCall] = ("new" ~> ws ~> signature ~! params) ^^ {
+  def newCall: Parser[NewCall] = ("new" ~> signature ~! params) ^^ {
     case signature ~ params => NewCall(signature, params)
   }
 
   def params: Parser[List[Expression]] = {
-    val noParams: Parser[List[Expression]] = "()" ^^^ List()
-    val atLeastOneParam: Parser[List[Expression]] = "(" ~> ( expression ~ (("," ~> ws ~> expression)*) ) <~ ")" ^^ {
-      case x ~ xs => x :: xs
-    }
+    val noParams: Parser[List[Expression]] = "(" ~ ")" ^^^ List()
+    val atLeastOneParam: Parser[List[Expression]] = "(" ~> rep1sep(expression, ",") <~ ")"
     noParams | atLeastOneParam
   }
 
   def varRef = ident
 
-  def assignment: Parser[Assignment] = ident ~ ((ws ~ "=" ~ ws) ~> expression) ^^ {
+  def assignment: Parser[Assignment] = ident ~ ("=" ~> expression) ^^ {
     case ident ~ expression => Assignment(ident, expression)
   }
 
   //todo (grek): implement parsing of all literals, recheck what we already have and make it less hacky
   def literal: Parser[Literal] = {
-    val stringChar = chrExcept('\n', '\"')
-    val stringLiteral: Parser[StringLiteral] = ('\"' ~> (stringChar *) <~ '\"') ^^ (x => StringLiteral(x mkString))
-    val bool: Parser[BooleanLiteral] = ("false" | "true") ^^ (x => BooleanLiteral(x != "false"))
-    val char: Parser[CharLiteral] = ("'" ~> chrExcept('\'') <~ "'") ^^ (CharLiteral)
-    bool | char | stringLiteral
+    val bool: Parser[BooleanLiteral] = (Keyword("false") | Keyword("true")) ^^ {
+      case Keyword(x) => BooleanLiteral(x != "false")
+    }
+    val char: Parser[CharLiteral] =
+      accept("character literal", { case lexical.CharLit(x) => CharLiteral(x)})
+    bool | char | (stringLit ^^ StringLiteral)
   }
 
-  import scala.util.parsing.input.CharSequenceReader.EofCh
-  private def chrExcept(except: Char*): Parser[Char] = elem("", ch =>
-    (  ch != EofCh && !except.contains(ch))
-  )
+  /** Parse some prefix of reader `in' with parser `p' */
+  def parse[T](p: Parser[T], in: scala.util.parsing.input.Reader[Char]): ParseResult[T] =
+    p(new lexical.Scanner(in))
 
-  private def ws: Parser[Char] = ' '
+  /** Parse some prefix of reader `in' with parser `p' */
+  def parse[T](p: Parser[T], in: java.io.Reader): ParseResult[T] = {
+    import scala.collection.immutable.PagedSeq
+    import scala.util.parsing.input.PagedSeqReader
+    parse(p, new PagedSeqReader(PagedSeq.fromReader(in)))
+  }
 
-  private def LF: Parser[Char] = '\n'
+  /** Parse some prefix of character sequence `in' with parser `p' */
+  def parse[T](p: Parser[T], in: java.lang.CharSequence): ParseResult[T] =
+    parse(p, new scala.util.parsing.input.CharSequenceReader(in))
 
-  private def ignoreWsLF: Parser[Unit] = ((LF | ws)*) ^^^ (())
+}
 
+object Parsers {
+  val reserved = List("public", "final", "abstract", "class", "interface",
+                            "extends", "implements", "static", "super", "this",
+                            "new", "false", "true", "if", "else")
+  val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "::", ".", ",", "=")
 }

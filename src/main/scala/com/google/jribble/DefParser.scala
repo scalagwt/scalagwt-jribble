@@ -23,9 +23,10 @@ class DefParser {
   val parsers = new Parsers {
     val defParser: Parser[ast.DeclaredType] = classDef | interfaceDef
   }
+  import parsers._
 
-  def parse(in: java.io.Reader): ast.DeclaredType = parsers.parse(parsers.defParser, in) match {
-    case parsers.Success(result, _) => result
+  def parse(in: java.io.Reader): ast.DeclaredType = parsers.parse(phrase(defParser), in) match {
+    case Success(result, _) => result
     case x => error("Could not parse the input " + x)
   }
 

@@ -24,7 +24,7 @@ class JribbleScalaObject {
   val parsers = new Parsers {}
 
   implicit def liftParser[T](p: parsers.Parser[T]): String => T =
-    (new CharSequenceReader(_: String)) andThen p andThen {
+    (parsers.parse(p, _: String)) andThen {
       _ match {
         case parsers.Success(result, _) => result
         case x => error("Could not parse the input because " + x)
