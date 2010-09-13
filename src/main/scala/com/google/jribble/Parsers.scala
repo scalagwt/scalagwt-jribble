@@ -18,7 +18,7 @@ package com.google.jribble
 
 import com.google.jribble.ast._
 import scala.util.parsing.combinator.syntactical.StdTokenParsers
-import scala.util.parsing.combinator.ImplicitConversions
+import scala.util.parsing.combinator.{PackratParsers, ImplicitConversions}
 
 /**
  * Collection of jribble parsers.
@@ -26,7 +26,7 @@ import scala.util.parsing.combinator.ImplicitConversions
  * All String literals occuring in Parser definition are either Keywords or delimiters (also represented as Keyword
  * token).
  */
-trait Parsers extends StdTokenParsers with ImplicitConversions {
+trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversions {
 
   type Tokens = Lexer
   val lexical = new Tokens
@@ -149,42 +149,25 @@ trait Parsers extends StdTokenParsers with ImplicitConversions {
   def ifStatement: Parser[If] =
     ("if" ~> "(" ~> expression <~ ")") ~! block ~ opt("else" ~> block) ^^ If
 
-  def conditional: Parser[Conditional] = "(" ~> (expression <~ "?") ~! ("(" ~> typ <~ ")") ~! expression ~!
+  lazy val conditional: PackratParser[Conditional] = "(" ~> (expression <~ "?") ~! ("(" ~> typ <~ ")") ~! expression ~!
           (":" ~> expression) <~ ")" ^^ Conditional
 
-  def expression: Parser[Expression] = {
-    val staticCall: Parser[StaticMethodCall] = (ref ~ methodCall) ^^ {
-      case ref ~ (signature ~ params) => StaticMethodCall(ref, signature, params)
-    }
+  lazy val expression: PackratParser[Expression] = {
     val thisRef: Parser[Expression] = "this" ^^^ ThisRef
     val varRef: Parser[VarRef] = ident ^^ (VarRef)
-    //all possible types of expression on which method can be called, note that method called on "this" instance
-    //must be prefixed with this
-    val callTarget = conditional | literal | newCall | staticCall | thisRef | varRef 
-    (callTarget ~ (methodCall *)) ^^ {
-      case on ~ calls => {
-        //todo (grek): this fragment even if involves simple folding of calls might be slightly dense and might deserve
-        //todo (grek): a few words of more elaborate explanation. Must ask others for opinion
-        val fs: List[Expression => Expression] = calls map {
-          case signature ~ params => MethodCall(_: Expression, signature, params)
-        }
-        //type ascription is needed because otherwise Expression with Product is inferred which causes type checking
-        //errors in f(x) expression because it result in Expression and not Expression with Product
-        fs.foldLeft(on: Expression) {
-          case (x, f) => f(x)
-        }
-      }
-    }
+    methodCall | staticCall | newCall | conditional | literal | thisRef | varRef
   }
 
-  def signature: Parser[Signature] = "(" ~> ((ref <~ "::") ~ name) ~!
+  lazy val signature: Parser[Signature] = "(" ~> ((ref <~ "::") ~ name) ~!
           ("(" ~> (typ *) <~ ")") ~! returnType <~ ")" ^^ Signature
 
-  def methodCall: Parser[Signature ~ List[Expression]] = "." ~> signature ~! params
+  lazy val staticCall: PackratParser[StaticMethodCall] = (ref ~ ("." ~> signature) ~! params) ^^ StaticMethodCall
 
-  def newCall: Parser[NewCall] = ("new" ~> signature ~! params) ^^ NewCall
+  lazy val methodCall: PackratParser[MethodCall] = expression ~ ("." ~> signature) ~! params ^^ MethodCall
 
-  def params: Parser[List[Expression]] = {
+  lazy val newCall: PackratParser[NewCall] = ("new" ~> signature ~! params) ^^ NewCall
+
+  lazy val params: PackratParser[List[Expression]] = {
     val noParams: Parser[List[Expression]] = "(" ~ ")" ^^^ List()
     val atLeastOneParam: Parser[List[Expression]] = "(" ~> rep1sep(expression, ",") <~ ")"
     noParams | atLeastOneParam
@@ -206,7 +189,7 @@ trait Parsers extends StdTokenParsers with ImplicitConversions {
 
   /** Parse some prefix of reader `in' with parser `p' */
   def parse[T](p: Parser[T], in: scala.util.parsing.input.Reader[Char]): ParseResult[T] =
-    p(new lexical.Scanner(in))
+    phrase(p)(new lexical.Scanner(in))
 
   /** Parse some prefix of reader `in' with parser `p' */
   def parse[T](p: Parser[T], in: java.io.Reader): ParseResult[T] = {
