@@ -4,6 +4,15 @@ import org.scalacheck.Shrink
 import Shrink._
 import ast._
 
+/**
+ * Contains definitions of Shrink[T] for T being one of AST nodes.
+ *
+ * Shrink[T] is being used by ScalaCheck to find shrink T to smaller example still
+ * falsifying tested property.
+ *
+ * Shrinks defined for recursive (even not directly) definitions can flatten the structure
+ * in addition to just shrinking subtrees. See shrinkExpression for example of that technique.
+ */
 object Shrinkers {
 
   implicit def shrinkClassDef: Shrink[ClassDef] = Shrink { 
@@ -57,8 +66,47 @@ object Shrinkers {
 
   implicit def shrinkNewCall: Shrink[NewCall] = Shrink {
     case x@NewCall(signature, params) =>
+      (for (v <- shrink(params)) yield x.copy(params = v)) append
+      (for (v <- shrink(signature)) yield x.copy(signature = v))
+  }
+
+  implicit def shrinkVarRef: Shrink[VarRef] = Shrink {
+    case VarRef(name) => for (v <- shrinkName.shrink(name)) yield VarRef(name)
+  }
+
+  implicit def shrinkExpression: Shrink[Expression] = Shrink {
+    case x: VarRef => shrink(x)
+    case ThisRef => shrink(ThisRef)
+    case x@MethodCall(on, _, params) =>
+      shrink(x) append
+      shrink(on) append
+      params.map(shrink(_)).foldLeft(Stream.empty[Expression])(interleave)      
+    case x@StaticMethodCall(_, _, params) =>
+      shrink(x) append
+      params.map(shrink(_)).foldLeft(Stream.empty[Expression])(interleave)  
+    case x@NewCall(_, params) =>
+      shrink(x) append
+      params.map(shrink(_)).foldLeft(Stream.empty[Expression])(interleave)
+    case x: Literal => shrink(x)
+    case x@Conditional(condition, _, then, elsee) =>
+      shrink(x) append
+      shrink(condition) append
+      shrink(then) append
+      shrink(elsee)
+  }
+
+  implicit def shrinkMethodCall: Shrink[MethodCall] = Shrink {
+    case x@MethodCall(on, signature, params) =>
+      (for (v <- shrink(on)) yield x.copy(on = v)) append
       (for (v <- shrink(signature)) yield x.copy(signature = v)) append
-      (for (v <- shrink(params)) yield x.copy(params = v))  
+      (for (v <- shrink(params)) yield x.copy(params = v))
+  }
+
+  implicit def shrinkStaticMethodCall: Shrink[StaticMethodCall] = Shrink {
+    case x@StaticMethodCall(classRef, signature, params) =>
+      (for (v <- shrink(classRef)) yield x.copy(classRef = v)) append
+      (for (v <- shrink(signature)) yield x.copy(signature = v)) append
+      (for (v <- shrink(params)) yield x.copy(params = v))
   }
 
   implicit def shrinkIf: Shrink[If] = Shrink {
@@ -71,12 +119,27 @@ object Shrinkers {
   implicit def shrinkLiteral: Shrink[Literal] = Shrink { x: Literal =>
     x match {
       case StringLiteral(vv) => for (v <- shrink(vv)) yield StringLiteral(v)
-      case _ => Stream.continually(x)
+      case DoubleLiteral(vv) => for (v <- shrink(vv)) yield DoubleLiteral(v)
+      case FloatLiteral(vv)  => for (v <- shrink(vv)) yield FloatLiteral(v)
+      case IntLiteral(vv)    => for (v <- shrink(vv)) yield IntLiteral(v)
+      case LongLiteral(vv)   => for (v <- shrink(vv)) yield LongLiteral(v)
+      //these literals cannot be shrunk so we return empty Stream
+      case BooleanLiteral(_) | CharLiteral(_) | NullLiteral => Stream.empty
     }
   }
 
   private val shrinkName: Shrink[String] = Shrink { s =>
     shrink(s).filterNot(_.isEmpty)
   }
+
+  /**
+   * A method that merges to Streams by interleaving elements.
+   *
+   * This method has been copied from ScalaCheck library.
+   */
+  private def interleave[T](xs: Stream[T], ys: Stream[T]): Stream[T] =
+    if(xs.isEmpty) ys
+    else if(ys.isEmpty) xs
+    else Stream(xs.head, ys.head) append interleave(xs.tail, ys.tail)
 
 }
