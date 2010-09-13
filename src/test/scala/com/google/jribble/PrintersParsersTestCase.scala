@@ -16,7 +16,7 @@
 package com.google.jribble
 
 import com.google.jribble.ast._
-import org.scalacheck.{Shrink, Arbitrary, Prop, Properties}
+import org.scalacheck._
 
 object PrintersParsersTestCase extends Properties("formatAndParseField") {
   import Generators._
@@ -25,10 +25,16 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
   val parsers: Parsers = new Parsers {}
   val printers: Printers = new Printers {}
 
-  def checkEqual[T: Arbitrary: Shrink,U](f: T => U, g: T => U) =
-    Prop.forAll((x: T) => f(x) == g(x))
+  import printers._
 
-  def checkPrinterParser[T: Arbitrary: Shrink](printer: printers.Printer[T], parser: parsers.Parser[T]) =
+  def checkEqual[T: Arbitrary: Shrink: printers.Printer,U](f: T => U, g: T => U) = {
+    implicit val pretty: T => Pretty = (x: T) => Pretty { p =>
+      "-- Formatted:\n%1\n-- using toString:\n%2".format(implicitly[Printer[T]].apply(x), x.toString)
+    }
+    Prop.forAll((x: T) => f(x) == g(x))
+  }
+
+  def checkPrinterParser[T: Arbitrary: Shrink: printers.Printer](printer: printers.Printer[T], parser: parsers.Parser[T]) =
     checkEqual(printer andThen liftParser(parser), Left(_: T))
 
   implicit def liftParser[T](p: parsers.Parser[T]): String => Either[T,String] =
