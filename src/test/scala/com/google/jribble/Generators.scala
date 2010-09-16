@@ -77,10 +77,14 @@ object Generators {
     elsee <- expression
   } yield Conditional(condition, typ, then, elsee)
 
+  def instanceOf: Gen[InstanceOf] = for (on <- expression(0); t <- ref) yield InstanceOf(on, t)
+
+  def cast: Gen[Cast] = for (on <- expression(0); t <- ref) yield Cast(on, t)
+
   def expression(implicit depth: Int): Gen[Expression] = {
     val nonRecursive = Gen.frequency((2, literal), (1, varRef), (1, Gen.value(ThisRef)))
     val recursive = Gen.oneOf(Gen.lzy(newCall(depth+1)), Gen.lzy(methodCall(depth+1)),
-      Gen.lzy(staticMethodCall(depth+1)), Gen.lzy(conditional))
+      Gen.lzy(staticMethodCall(depth+1)), Gen.lzy(conditional), Gen.lzy(instanceOf), Gen.lzy(cast))
 
     Gen.frequency((2*(depth+1), nonRecursive), (1, recursive))
   }
@@ -168,6 +172,8 @@ object Generators {
   implicit val arbMethodCall = Arbitrary(methodCall(0))
   implicit val arbStaticMethodCall = Arbitrary(staticMethodCall(0))
   implicit val arbConditional = Arbitrary(conditional(0))
+  implicit val arbInstanceOf = Arbitrary(instanceOf)
+  implicit val arbCast = Arbitrary(cast)
   implicit val arbExpression = Arbitrary(expression(0))
   implicit val arbVarDef = Arbitrary(varDef)
   implicit val arbAssignment = Arbitrary(assignment)

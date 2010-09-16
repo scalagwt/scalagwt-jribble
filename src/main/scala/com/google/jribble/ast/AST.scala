@@ -97,6 +97,10 @@ case class StaticMethodCall(classRef: Ref, signature: Signature, params: List[Ex
 
 case class Conditional(condition: Expression, typ: Type, then: Expression, elsee: Expression) extends Expression
 
+case class InstanceOf(on: Expression, typ: Ref) extends Expression
+
+case class Cast(on: Expression, typ: Ref) extends Expression
+
 sealed abstract class Type extends AST
 case class Ref(pkg: Option[Package], name: String) extends Type {
   def javaName: String = pkg.map(_.name.replace("/", ".") + ".").getOrElse("") + name

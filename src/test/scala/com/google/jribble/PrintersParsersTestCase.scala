@@ -29,7 +29,8 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
 
   def checkEqual[T: Arbitrary: Shrink: printers.Printer,U](f: T => U, g: T => U) = {
     implicit val pretty: T => Pretty = (x: T) => Pretty { p =>
-      "-- Formatted:\n%1\n-- using toString:\n%2".format(implicitly[Printer[T]].apply(x), x.toString)
+      "-- Formatted:\n%1s\n-- using toString:\n%2s".format(implicitly[Printer[T]].apply(x), x.toString) +
+      "\n f returned: " + f(x)
     }
     Prop.forAll((x: T) => f(x) == g(x))
   }
@@ -64,6 +65,11 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
   //todo (grek): possibly tests for methodCalls and staticMethodCalls?
 
   property("conditional") = checkPrinterParser(printers.ConditionalPrinter, parsers.conditional)
+
+  //TODO(grek): These tests are disabled due to probable bug in PackratParsers, see
+  //http://article.gmane.org/gmane.comp.lang.scala.user/31210
+//  property("instanceof") = checkPrinterParser(printers.InstanceOfPrinter, parsers.instanceOf)
+//  property("cast") = checkPrinterParser(printers.CastPrinter, parsers.cast)
 
   property("expression") = checkPrinterParser(printers.ExpressionPrinter, parsers.expression)
 

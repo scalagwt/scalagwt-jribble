@@ -152,10 +152,15 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
   lazy val conditional: PackratParser[Conditional] = "(" ~> (expression <~ "?") ~! ("(" ~> typ <~ ")") ~! expression ~!
           (":" ~> expression) <~ ")" ^^ Conditional
 
+  lazy val instanceOf: PackratParser[InstanceOf] = expression ~
+          ("." ~> "<" ~> "instanceof" ~> ">" ~> ("(" ~> ref <~ ")")) ^^ InstanceOf
+
+  lazy val cast: PackratParser[Cast] = expression ~ ("." ~> "<" ~> "cast" ~> ">" ~> ("(" ~> ref <~ ")")) ^^ Cast
+
   lazy val expression: PackratParser[Expression] = {
     val thisRef: Parser[Expression] = "this" ^^^ ThisRef
     val varRef: Parser[VarRef] = ident ^^ (VarRef)
-    methodCall | staticCall | newCall | conditional | literal | thisRef | varRef
+    methodCall | instanceOf | cast | staticCall | newCall | conditional | literal | thisRef | varRef
   }
 
   lazy val signature: Parser[Signature] = "(" ~> ((ref <~ "::") ~ name) ~!
@@ -207,6 +212,6 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 object Parsers {
   val reserved = List("public", "final", "abstract", "class", "interface",
                             "extends", "implements", "static", "super", "this",
-                            "new", "false", "true", "if", "else")
-  val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "::", ".", ",", "=")
+                            "new", "false", "true", "if", "else", "instanceof", "cast")
+  val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "::", ".", ",", "=", "<", ">")
 }

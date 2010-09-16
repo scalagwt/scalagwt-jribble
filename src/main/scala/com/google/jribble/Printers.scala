@@ -100,6 +100,14 @@ trait Printers {
             ExpressionPrinter(x.then) + " : " + ExpressionPrinter(x.elsee) + ")"
   }
 
+  implicit object InstanceOfPrinter extends Printer[InstanceOf] {
+    def apply(x: InstanceOf) = ExpressionPrinter(x.on) + "." + "<instanceof>" + "(" + RefPrinter(x.typ) + ")" 
+  }
+
+  implicit object CastPrinter extends Printer[Cast] {
+    def apply(x: Cast) = ExpressionPrinter(x.on) + "." + "<cast>" + "(" + RefPrinter(x.typ) + ")"
+  }
+
   implicit object ExpressionPrinter extends Printer[Expression] {
     def apply(x: Expression) = x match {
       case x: Literal => LiteralPrinter(x)
@@ -109,6 +117,8 @@ trait Printers {
       case x: MethodCall => MethodCallPrinter(x)
       case x: StaticMethodCall => StaticMethodCallPrinter(x)
       case x: Conditional => ConditionalPrinter(x)
+      case x: InstanceOf => InstanceOfPrinter(x)
+      case x: Cast => CastPrinter(x)
     }
   }
 

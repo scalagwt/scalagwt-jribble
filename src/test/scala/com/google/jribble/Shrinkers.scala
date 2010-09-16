@@ -93,6 +93,12 @@ object Shrinkers {
       shrink(condition) append
       shrink(then) append
       shrink(elsee)
+    case x@InstanceOf(on, _) =>
+      shrink(x) append
+      shrink(on)
+    case x@Cast(on, _) =>
+      shrink(x) append
+      shrink(on)
   }
 
   implicit def shrinkMethodCall: Shrink[MethodCall] = Shrink {
@@ -114,6 +120,18 @@ object Shrinkers {
       (for (v <- shrink(condition)) yield x.copy(condition = v)) append
       (for (v <- shrink(then)) yield x.copy(then = v)) append
       (for (v <- shrink(elsee)) yield x.copy(elsee = v))
+  }
+
+  implicit def shrinkInstanceOf: Shrink[InstanceOf] = Shrink {
+    case x@InstanceOf(on, typ) =>
+      (for (v <- shrink(on)) yield x.copy(on = v)) append
+      (for (v <- shrink(typ)) yield x.copy(typ = v))
+  }
+
+  implicit def shrinkCast: Shrink[Cast] = Shrink {
+    case x@Cast(on, typ) =>
+      (for (v <- shrink(on)) yield x.copy(on = v)) append
+      (for (v <- shrink(typ)) yield x.copy(typ = v))
   }
 
   implicit def shrinkLiteral: Shrink[Literal] = Shrink { x: Literal =>
