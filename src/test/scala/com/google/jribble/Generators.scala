@@ -136,10 +136,10 @@ object Generators {
 
   def implementsDef: Gen[List[Ref]] = Gen.resize(3, Gen.listOf(ref))
 
-  def classBody: Gen[List[Either[Constructor, MethodDef]]] = for {
+  def classBody: Gen[List[ClassBodyElement]] = for {
     cs <- Gen.resize(3, Gen.listOf(constructor))
     ms <- Gen.resize(5, Gen.listOf(methodDef))
-  } yield cs.map(Left(_)) ++ ms.map(Right(_))
+  } yield cs ++ ms
 
   def interfaceBody: Gen[List[MethodDef]] = for {
     ms <- Gen.resize(5, Gen.listOf(methodDef.filter(_.body.statements.isEmpty)))

@@ -75,11 +75,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
   def implementsDef: Parser[List[Ref]] = "implements" ~> rep1sep(ref, ",")
 
-  def classBody: Parser[List[Either[Constructor, MethodDef]]] = {
-    val constructor = this.constructor ^^ (Left(_))
-    val methodDef = this.methodDef ^^ (Right(_))
-    "{" ~> rep(constructor | methodDef) <~ "}"
-  }
+  def classBody: Parser[List[ClassBodyElement]] = "{" ~> rep(constructor | methodDef) <~ "}"
 
   def interfaceBody: Parser[List[MethodDef]] = {
     val methodDef = this.methodDef into {

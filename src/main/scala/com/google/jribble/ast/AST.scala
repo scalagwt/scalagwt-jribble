@@ -26,12 +26,15 @@ sealed abstract class DeclaredType {
 
 case class Package(name: String) extends AST
 
+sealed trait InterfaceBodyElement extends AST
+sealed trait ClassBodyElement extends AST
+
 case class ClassDef(modifs: Set[String], name: Ref, ext: Option[Ref], implements: List[Ref],
-        body: List[Either[Constructor, MethodDef]]) extends DeclaredType {
+        body: List[ClassBodyElement]) extends DeclaredType {
 
-  def jconstructors: JList[Constructor] = body collect { case Left(x) => x}
+  def jconstructors: JList[Constructor] = body collect { case x: Constructor => x}
 
-  def jmethodDefs: JList[MethodDef] = body collect { case Right(x) => x }
+  def jmethodDefs: JList[MethodDef] = body collect { case x: MethodDef => x }
 
   def jimplements: JList[Ref] = implements
 }
@@ -42,12 +45,12 @@ case class InterfaceDef(modifs: Set[String], name: Ref, ext: Option[Ref], body: 
 
 case class ParamDef(name: String, typ: Type) extends AST
 
-case class Constructor(name: String, params: List[ParamDef], body: Block) extends AST {
+case class Constructor(name: String, params: List[ParamDef], body: Block) extends ClassBodyElement {
   def jparams: JList[ParamDef] = params
   def signature(enclosing: Ref) = Signature(enclosing, enclosing.name, params.map(_.typ), Void)
 }
 case class MethodDef(modifs: Set[String], returnType: Type, name: String, params: List[ParamDef],
-                     body: Block) extends AST {
+                     body: Block) extends ClassBodyElement with InterfaceBodyElement {
   def jparams: JList[ParamDef] = params
   def signature(enclosing: Ref) = Signature(enclosing, name, params.map(_.typ), returnType)
 }

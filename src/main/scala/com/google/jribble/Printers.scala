@@ -161,8 +161,8 @@ trait Printers {
   implicit object ClassDefPrinter extends Printer[ClassDef] {
     def apply(x: ClassDef) = {
       val body = (x.body.map {
-        case Left(constructor) => ConstructorPrinter(constructor)
-        case Right(methodDef) => MethodDefPrinter(methodDef)
+        case constructor: Constructor => ConstructorPrinter(constructor)
+        case methodDef: MethodDef => MethodDefPrinter(methodDef)
       }).mkString("{\n", "\n", "}\n")
       val implements = x.implements match {
         case Nil => ""
