@@ -122,6 +122,15 @@ object Generators {
     for (m <- methodModifiers; t <- returnType; n <- identifier; p <- paramsDef; b <- methodBody) yield
       MethodDef(m, t, n, p, b)
 
+  def fieldDef: Gen[FieldDef] = {
+    def modifiers: Gen[Set[String]] = {
+      val modif = Gen.oneOf("public", "final", "static", "private")
+      Gen.resize(3, Gen.listOf(modif)).map(_.toSet)
+    }
+    import Arbitrary._
+    for (m <- modifiers; t <- typ; n <- identifier; v <- arbitrary[Option[Expression]]) yield FieldDef(m, t, n, v)
+  }
+
   def classModifiers: Gen[Set[String]] = {
     val modif = Gen.oneOf("public", "final")
     Gen.resize(2, Gen.listOf(modif)).map(_.toSet)
@@ -139,7 +148,8 @@ object Generators {
   def classBody: Gen[List[ClassBodyElement]] = for {
     cs <- Gen.resize(3, Gen.listOf(constructor))
     ms <- Gen.resize(5, Gen.listOf(methodDef))
-  } yield cs ++ ms
+    fs <- Gen.resize(3, Gen.listOf(fieldDef))
+  } yield cs ++ ms ++ fs
 
   def interfaceBody: Gen[List[MethodDef]] = for {
     ms <- Gen.resize(5, Gen.listOf(methodDef.filter(_.body.statements.isEmpty)))
@@ -182,6 +192,7 @@ object Generators {
   implicit val arbMethodBody = Arbitrary(methodBody) 
   implicit val arbConstructor = Arbitrary(constructor)
   implicit val arbMethodDef = Arbitrary(methodDef)
+  implicit val arbFieldDef = Arbitrary(fieldDef)
   implicit val arbClassDef = Arbitrary(classDef)
   implicit val arbInterfaceDef = Arbitrary(interfaceDef)
 }

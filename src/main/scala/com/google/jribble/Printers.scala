@@ -158,11 +158,17 @@ trait Printers {
               BlockPrinter(x.body) + "\n" 
   }
 
+  implicit object FieldDefPrinter extends Printer[FieldDef] {
+    def apply(x: FieldDef) = x.modifs.map(_ + " ").mkString + TypePrinter(x.typ) + " " + x.name +
+      x.value.map(" = " + ExpressionPrinter(_)).getOrElse("") + ";"
+  }
+
   implicit object ClassDefPrinter extends Printer[ClassDef] {
     def apply(x: ClassDef) = {
       val body = (x.body.map {
         case constructor: Constructor => ConstructorPrinter(constructor)
         case methodDef: MethodDef => MethodDefPrinter(methodDef)
+        case fieldDef: FieldDef => FieldDefPrinter(fieldDef)
       }).mkString("{\n", "\n", "}\n")
       val implements = x.implements match {
         case Nil => ""

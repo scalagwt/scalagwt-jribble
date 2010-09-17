@@ -55,6 +55,8 @@ case class MethodDef(modifs: Set[String], returnType: Type, name: String, params
   def signature(enclosing: Ref) = Signature(enclosing, name, params.map(_.typ), returnType)
 }
 
+case class FieldDef(modifs: Set[String], typ: Type, name: String, value: Option[Expression]) extends ClassBodyElement
+
 case class Block(statements: List[Statement]) {
   def jstatements: JList[Statement] = statements
 }

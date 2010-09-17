@@ -75,7 +75,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
   def implementsDef: Parser[List[Ref]] = "implements" ~> rep1sep(ref, ",")
 
-  def classBody: Parser[List[ClassBodyElement]] = "{" ~> rep(constructor | methodDef) <~ "}"
+  def classBody: Parser[List[ClassBodyElement]] = "{" ~> rep(constructor | methodDef | fieldDef) <~ "}"
 
   def interfaceBody: Parser[List[MethodDef]] = {
     val methodDef = this.methodDef into {
@@ -131,8 +131,14 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     modifs(allowed).map(_.toSet)
   }
 
-  def methodDef: Parser[MethodDef] = methodModifs ~ returnType ~! name ~! paramsDef ~! methodBody ^^ MethodDef
+  def methodDef: Parser[MethodDef] = (methodModifs ~ returnType ~ name ~ paramsDef) ~! methodBody ^^ MethodDef
 
+  val fieldModifs: Parser[Set[String]] = {
+    val allowed = Set("public", "final", "static", "private")
+    modifs(allowed).map(_.toSet)
+  }
+
+  def fieldDef: Parser[FieldDef] = fieldModifs ~ typ ~ name ~ opt("=" ~> expression) <~ ";" ^^ FieldDef
 
   def VoidType: Parser[Type] = (Identifier("V") ~! ";" ^^^ Void)
 
@@ -207,7 +213,8 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
 object Parsers {
   val reserved = List("public", "final", "abstract", "class", "interface",
-                            "extends", "implements", "static", "super", "this",
-                            "new", "false", "true", "if", "else", "instanceof", "cast")
+                      "extends", "implements", "static", "super", "this",
+                      "new", "false", "true", "if", "else", "instanceof",
+                      "cast", "private")
   val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "::", ".", ",", "=", "<", ">")
 }

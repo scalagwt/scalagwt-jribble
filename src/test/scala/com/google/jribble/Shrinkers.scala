@@ -52,6 +52,14 @@ object Shrinkers {
       (for (v <- shrink(body)) yield x.copy(body = v))
   }
 
+  implicit def shrinkFieldDef: Shrink[FieldDef] = Shrink {
+    case x@FieldDef(modifs, typ, name, value) =>
+      (for (v <- shrink(modifs)) yield x.copy(modifs = v)) append
+      (for (v <- shrink(typ)) yield x.copy(typ = v)) append
+      (for (v <- shrinkName.shrink(name)) yield x.copy(name = v)) append
+      (for (v <- shrink(value)) yield x.copy(value = v))
+  }
+
   implicit def shrinkBlock: Shrink[Block] = Shrink {
     case Block(statements) =>
       for (v <- shrink(statements)) yield Block(v)
