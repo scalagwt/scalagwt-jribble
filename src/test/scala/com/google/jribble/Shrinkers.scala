@@ -65,6 +65,40 @@ object Shrinkers {
       for (v <- shrink(statements)) yield Block(v)
   }
 
+  implicit def shrinkStatement: Shrink[Statement] = Shrink {
+    case x: VarDef => shrink(x)
+    case x: Assignment => shrink(x)
+    case x@If(condition, then, elsee) =>
+      shrink(x) append
+      shrink(condition) append
+      then.statements.map(shrink(_)).foldLeft(Stream.empty[Statement])(interleave)
+      elsee match {
+        case Some(Block(statements)) => statements.map(shrink(_)).foldLeft(Stream.empty[Statement])(interleave)
+        case None => Stream.empty[Statement]
+      }
+    case x: SuperConstructorCall => shrink(x)
+    case x: Expression => shrink(x)
+  }
+
+  implicit def shrinkVarDef: Shrink[VarDef] = Shrink {
+    case x@VarDef(typ, name, value) =>
+      (for (v <- shrink(typ)) yield x.copy(typ = v)) append
+      (for (v <- shrinkName.shrink(name)) yield x.copy(name = v)) append
+      (for (v <- shrink(value)) yield x.copy(value = v))
+  }
+
+  implicit def shrinkAssignment: Shrink[Assignment] = Shrink {
+    case x@Assignment(name, value) =>
+      (for (v <- shrinkName.shrink(name)) yield x.copy(name = v)) append
+      (for (v <- shrink(value)) yield x.copy(value = v))
+  }
+
+  implicit def shrinkSuperConstructorCall: Shrink[SuperConstructorCall] = Shrink {
+    case x@SuperConstructorCall(signature, params) =>
+      (for (v <- shrink(signature)) yield x.copy(signature = v)) append
+      (for (v <- shrink(params)) yield x.copy(params = v))
+  }
+
   implicit def shrinkSignature: Shrink[Signature] = Shrink {
     case x@Signature(on, name, paramTypes, _) =>
       (for (v <- shrink(on)) yield x.copy(on = v)) append
