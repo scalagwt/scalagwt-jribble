@@ -60,7 +60,9 @@ object Generators {
     import Arbitrary._
     //todo (grek): once parsing of escaped is implemented we should switch to broader domain of strings
     val stringLiteral = for (x <- Gen.listOf(Gen.alphaNumChar)) yield StringLiteral(x mkString)
-    val charLiteral = for (x <- arbitrary[Char]) yield CharLiteral(x)
+    //TODO(grek): figure out what's the biggest subset of Chars that is supported in jribble or implement
+    //support for encoding all chars
+    val charLiteral = for (x <- Gen.alphaNumChar) yield CharLiteral(x)
     val booleanLiteral = for (x <- arbitrary[Boolean]) yield BooleanLiteral(x)
     stringLiteral | charLiteral | booleanLiteral
   }
