@@ -133,6 +133,12 @@ trait Printers {
     })
   }
 
+  implicit object TryPrinter extends Printer[Try] {
+    def apply(x: Try) = "try " + BlockPrinter(x.block) + (x.catches.map {
+      case (ref, name, block) => " catch (" + RefPrinter(ref) + " " + name + ") " + BlockPrinter(block)
+    }).mkString("\n") + x.finalizer.map(" finally " + BlockPrinter(_)).getOrElse("")
+  }
+
   implicit object StatementPrinter extends Printer[Statement] {
     def apply(x: Statement) = x match {
       case x: VarDef => VarDefPrinter(x) + ";"
@@ -140,6 +146,7 @@ trait Printers {
       case x: Expression => ExpressionPrinter(x) + ";"
       case x: SuperConstructorCall => SuperConstructorCall(x) + ";"
       case x: If => IfPrinter(x)
+      case x: Try => TryPrinter(x)
     }
   }
 

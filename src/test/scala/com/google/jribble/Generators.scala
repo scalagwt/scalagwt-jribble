@@ -109,12 +109,19 @@ object Generators {
     elsee <- Arbitrary.arbitrary[Option[Block]]
   } yield If(condition, then, elsee)
 
+  def tryStatement(implicit depth: StmtDepth): Gen[Try] = for {
+    b <- block
+    val catchGen = for (r <- ref; n <- identifier; b <- block) yield (r, n, b)
+    catches <- Gen.resize(2, Gen.listOf(catchGen))
+    finalizer <- Arbitrary.arbitrary[Option[Block]]
+    if (!(catches.isEmpty && finalizer.isEmpty))
+  } yield Try(b, catches, finalizer)
 
 
   def methodStatement(implicit depth: StmtDepth): Gen[Statement] = {
     val nonRecursive = Gen.oneOf(varDef, assignment, expression(ExprDepth(0)))
     val newDepth = depth.map(_+1)
-    val recursive = Gen.lzy(ifStatement(newDepth))
+    val recursive = Gen.oneOf(Gen.lzy(ifStatement(newDepth)), Gen.lzy(tryStatement(newDepth)))
     Gen.frequency((3*(depth.x+1), nonRecursive), (1, recursive))
   }
   def methodStatements(implicit depth: StmtDepth): Gen[List[Statement]] =
@@ -207,6 +214,7 @@ object Generators {
   implicit val arbVarDef = Arbitrary(varDef)
   implicit val arbAssignment = Arbitrary(assignment)
   implicit val arbIf = Arbitrary(ifStatement(StmtDepth(0)))
+  implicit val arbTry = Arbitrary(tryStatement(StmtDepth(0)))
   implicit val arbMethodStatement = Arbitrary(methodStatement(StmtDepth(0)))
   implicit val arbMethodBody = Arbitrary(methodBody) 
   implicit val arbConstructor = Arbitrary(constructor)

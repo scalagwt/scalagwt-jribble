@@ -146,10 +146,23 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
   def varDef: Parser[VarDef] = typ ~ (ident <~ "=") ~ expression ^^ VarDef
 
-  def methodStatement: Parser[Statement] = ifStatement | ((varDef | assignment | expression) <~ ";")
+  def methodStatement: Parser[Statement] = ifStatement | tryStatement | ((varDef | assignment | expression) <~ ";")
 
   def ifStatement: Parser[If] =
     ("if" ~> "(" ~> expression <~ ")") ~! block ~ opt("else" ~> block) ^^ If
+
+  def tryStatement: Parser[Try] = {
+    val catchParser: Parser[(Ref, String, Block)] = (("catch" ~> "(" ~> ref ~ name <~ ")") ~ block) ^^ {
+      case ref ~ name ~ block => Tuple3(ref, name, block)
+    }
+    val finallyParser: Parser[Block] = "finally" ~> block
+    (("try" ~> block) ~! (rep(catchParser) ~ opt(finallyParser) >> {
+      case x@(catches ~ finalizer) if (!(catches.isEmpty && finalizer.isEmpty)) => success(x)
+      case _ => failure("You must provide either at least one catch block or finally block.")
+    })) ^^ {
+      case block ~ (catches ~ finalizer) => Try(block, catches, finalizer)
+    }
+  }
 
   lazy val conditional: PackratParser[Conditional] = "(" ~> (expression <~ "?") ~! ("(" ~> typ <~ ")") ~! expression ~!
           (":" ~> expression) <~ ")" ^^ Conditional
@@ -215,6 +228,6 @@ object Parsers {
   val reserved = List("public", "final", "abstract", "class", "interface",
                       "extends", "implements", "static", "super", "this",
                       "new", "false", "true", "if", "else", "instanceof",
-                      "cast", "private")
+                      "cast", "private", "try", "catch", "finally")
   val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "::", ".", ",", "=", "<", ">")
 }

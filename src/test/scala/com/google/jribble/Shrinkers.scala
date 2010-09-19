@@ -76,6 +76,16 @@ object Shrinkers {
         case Some(Block(statements)) => statements.map(shrink(_)).foldLeft(Stream.empty[Statement])(interleave)
         case None => Stream.empty[Statement]
       }
+    case x@Try(block, catches, finalizer) =>
+      shrink(x) append
+      block.statements.map(shrink(_)).foldLeft(Stream.empty[Statement])(interleave) append
+      (catches.map {
+        case (_, _, block) => block.statements.map(shrink(_)).foldLeft(Stream.empty[Statement])(interleave)
+      }).foldLeft(Stream.empty[Statement])(interleave) append
+      (finalizer match {
+        case Some(Block(statements)) => statements.map(shrink(_)).foldLeft(Stream.empty[Statement])(interleave)
+        case None => Stream.empty[Statement]
+      })  
     case x: SuperConstructorCall => shrink(x)
     case x: Expression => shrink(x)
   }
@@ -162,6 +172,13 @@ object Shrinkers {
       (for (v <- shrink(condition)) yield x.copy(condition = v)) append
       (for (v <- shrink(then)) yield x.copy(then = v)) append
       (for (v <- shrink(elsee)) yield x.copy(elsee = v))
+  }
+
+  implicit def shrinkTry: Shrink[Try] = Shrink {
+    case x@Try(block, catches, finalizer) =>
+      (for (v <- shrink(block)) yield x.copy(block = v)) append
+      (for (v <- shrink(catches) if !(v.isEmpty && finalizer.isEmpty)) yield x.copy(catches = v)) append
+      (for (v <- shrink(finalizer) if !(catches.isEmpty && v.isEmpty)) yield x.copy(finalizer = v))
   }
 
   implicit def shrinkInstanceOf: Shrink[InstanceOf] = Shrink {

@@ -68,6 +68,11 @@ case class Assignment(name: String, value: Expression) extends Statement
 //blocks in if statements. Not sure if this is important.
 case class If(condition: Expression, then: Block, elsee: Option[Block]) extends Statement
 
+case class Try(block: Block, catches: List[(Ref, String, Block)], finalizer: Option[Block]) extends Statement {
+  //TODO(grek): Figure out if this requirement is needed for jribble
+  assert(!(catches.isEmpty && finalizer.isEmpty))
+}
+
 case class SuperConstructorCall(signature: Signature, params: List[Expression]) extends Statement {
   def jparams: JList[Expression] = params
 }
