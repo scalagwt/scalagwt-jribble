@@ -85,7 +85,12 @@ object Shrinkers {
       (finalizer match {
         case Some(Block(statements)) => statements.map(shrink(_)).foldLeft(Stream.empty[Statement])(interleave)
         case None => Stream.empty[Statement]
-      })  
+      })
+    case x@While(_, _, block) =>
+      shrink(x) append
+      block.statements.map(shrink(_)).foldLeft(Stream.empty[Statement])(interleave)
+    case x: Continue => shrink(x)
+    case x: Break => shrink(x)
     case x: SuperConstructorCall => shrink(x)
     case x: Expression => shrink(x)
   }
@@ -179,6 +184,21 @@ object Shrinkers {
       (for (v <- shrink(block)) yield x.copy(block = v)) append
       (for (v <- shrink(catches) if !(v.isEmpty && finalizer.isEmpty)) yield x.copy(catches = v)) append
       (for (v <- shrink(finalizer) if !(catches.isEmpty && v.isEmpty)) yield x.copy(finalizer = v))
+  }
+
+  implicit def shrinkWhile: Shrink[While] = Shrink {
+    case x@While(label, condition, block) =>
+      (for (v <- shrinkOption(shrinkName).shrink(label)) yield x.copy(label = v)) append
+      (for (v <- shrink(condition)) yield x.copy(condition = v)) append
+      (for (v <- shrink(block)) yield x.copy(block = v))
+  }
+
+  implicit def shrinkContinue: Shrink[Continue] = Shrink {
+    case x@Continue(label) => for (v <- shrinkOption(shrinkName).shrink(label)) yield x.copy(label = v)
+  }
+
+  implicit def shrinkBreak: Shrink[Break] = Shrink {
+    case x@Break(label) => for (v <- shrinkOption(shrinkName).shrink(label)) yield x.copy(label = v)
   }
 
   implicit def shrinkInstanceOf: Shrink[InstanceOf] = Shrink {

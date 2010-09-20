@@ -139,6 +139,19 @@ trait Printers {
     }).mkString("\n") + x.finalizer.map(" finally " + BlockPrinter(_)).getOrElse("")
   }
 
+  implicit object WhilePrinter extends Printer[While] {
+    def apply(x: While) = x.label.map(_ + ": ").getOrElse("") +
+            "while (" + ExpressionPrinter(x.condition) + ") " + BlockPrinter(x.block)
+  }
+
+  implicit object ContinuePrinter extends Printer[Continue] {
+    def apply(x: Continue) = "continue" + x.label.map(" " + _).getOrElse("")
+  }
+
+  implicit object BreakPrinter extends Printer[Break] {
+    def apply(x: Break) = "break" + x.label.map(" " + _).getOrElse("")
+  }
+
   implicit object StatementPrinter extends Printer[Statement] {
     def apply(x: Statement) = x match {
       case x: VarDef => VarDefPrinter(x) + ";"
@@ -147,6 +160,9 @@ trait Printers {
       case x: SuperConstructorCall => SuperConstructorCall(x) + ";"
       case x: If => IfPrinter(x)
       case x: Try => TryPrinter(x)
+      case x: While => WhilePrinter(x)
+      case x: Break => BreakPrinter(x) + ";"
+      case x: Continue => ContinuePrinter(x) + ";"
     }
   }
 

@@ -117,11 +117,28 @@ object Generators {
     if (!(catches.isEmpty && finalizer.isEmpty))
   } yield Try(b, catches, finalizer)
 
+  def whileStatement(implicit depth: StmtDepth): Gen[While] = for {
+    label <- Arbitrary.arbOption(Arbitrary(identifier)).arbitrary
+    condition <- expression(ExprDepth(0))
+    b <- block
+  } yield While(label, condition, b)
+
+  def continueStatement: Gen[Continue] = for {
+    label <- Arbitrary.arbOption(Arbitrary(identifier)).arbitrary
+  } yield Continue(label)
+
+  def breakStatement: Gen[Break] = for {
+    label <- Arbitrary.arbOption(Arbitrary(identifier)).arbitrary
+  } yield Break(label)
 
   def methodStatement(implicit depth: StmtDepth): Gen[Statement] = {
-    val nonRecursive = Gen.oneOf(varDef, assignment, expression(ExprDepth(0)))
+    val nonRecursive = Gen.frequency(
+      (15, Gen.oneOf(varDef, assignment, expression(ExprDepth(0)))),
+      (1, continueStatement),
+      (1, breakStatement))
     val newDepth = depth.map(_+1)
-    val recursive = Gen.oneOf(Gen.lzy(ifStatement(newDepth)), Gen.lzy(tryStatement(newDepth)))
+    val recursive = Gen.oneOf(Gen.lzy(ifStatement(newDepth)), Gen.lzy(tryStatement(newDepth)),
+      Gen.lzy(whileStatement(newDepth)))
     Gen.frequency((3*(depth.x+1), nonRecursive), (1, recursive))
   }
   def methodStatements(implicit depth: StmtDepth): Gen[List[Statement]] =
@@ -215,6 +232,9 @@ object Generators {
   implicit val arbAssignment = Arbitrary(assignment)
   implicit val arbIf = Arbitrary(ifStatement(StmtDepth(0)))
   implicit val arbTry = Arbitrary(tryStatement(StmtDepth(0)))
+  implicit val arbWhile = Arbitrary(whileStatement(StmtDepth(0)))
+  implicit val arbContinue = Arbitrary(continueStatement)
+  implicit val arbBreak = Arbitrary(breakStatement)
   implicit val arbMethodStatement = Arbitrary(methodStatement(StmtDepth(0)))
   implicit val arbMethodBody = Arbitrary(methodBody) 
   implicit val arbConstructor = Arbitrary(constructor)

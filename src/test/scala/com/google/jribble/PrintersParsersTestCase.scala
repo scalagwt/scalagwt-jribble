@@ -81,6 +81,12 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
 
   property("try") = checkPrinterParser(printers.TryPrinter, parsers.tryStatement)
 
+  property("while") = checkPrinterParser(printers.WhilePrinter, parsers.whileStatement)
+
+  property("continue") = checkPrinterParser(printers.ContinuePrinter, parsers.continueStatement)
+
+  property("break") = checkPrinterParser(printers.BreakPrinter, parsers.breakStatement)
+
   property("methodBody") = checkPrinterParser(printers.BlockPrinter, parsers.methodBody)
 
   property("constructorBody") = checkPrinterParser(printers.BlockPrinter, parsers.constructorBody)

@@ -73,6 +73,11 @@ case class Try(block: Block, catches: List[(Ref, String, Block)], finalizer: Opt
   assert(!(catches.isEmpty && finalizer.isEmpty))
 }
 
+case class While(label: Option[String], condition: Expression, block: Block) extends Statement
+
+case class Continue(label: Option[String]) extends Statement
+case class Break(label: Option[String]) extends Statement
+
 case class SuperConstructorCall(signature: Signature, params: List[Expression]) extends Statement {
   def jparams: JList[Expression] = params
 }
