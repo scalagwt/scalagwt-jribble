@@ -158,6 +158,17 @@ trait Printers {
     def apply(x: Break) = "break" + x.label.map(" " + _).getOrElse("")
   }
 
+  implicit object SwitchPrinter extends Printer[Switch] {
+    def apply(x: Switch) = {
+      val groups = {
+        def groupPrinter(label: Expression, b: Block) = (ExpressionPrinter(label) + ":\n") + BlockPrinter(b)
+        x.groups.map((groupPrinter _).tupled) mkString "\n"
+      }
+      val default = x.default.map(b => "default:\n" + BlockPrinter(b))
+      "switch (" + ExpressionPrinter(x.expression) + ") {\n" + groups + default.getOrElse("") + "}\n"
+    }
+  }
+
   implicit object StatementPrinter extends Printer[Statement] {
     def apply(x: Statement) = x match {
       case x: VarDef => VarDefPrinter(x) + ";"
@@ -169,6 +180,7 @@ trait Printers {
       case x: While => WhilePrinter(x)
       case x: Break => BreakPrinter(x) + ";"
       case x: Continue => ContinuePrinter(x) + ";"
+      case x: Switch => SwitchPrinter(x)
     }
   }
 

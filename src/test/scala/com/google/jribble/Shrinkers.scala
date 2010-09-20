@@ -91,6 +91,16 @@ object Shrinkers {
       block.statements.map(shrink(_)).foldLeft(Stream.empty[Statement])(interleave)
     case x: Continue => shrink(x)
     case x: Break => shrink(x)
+    case x@Switch(_, groups, default) => {
+      shrink(x) append
+      (groups.map {
+        case (_, Block(statements)) => statements.map(shrink(_)).foldLeft(Stream.empty[Statement])(interleave)
+      }).foldLeft(Stream.empty[Statement])(interleave) append
+      (default match {
+        case Some(Block(statements)) => statements.map(shrink(_)).foldLeft(Stream.empty[Statement])(interleave)
+        case None => Stream.empty[Statement]
+      })
+    }
     case x: SuperConstructorCall => shrink(x)
     case x: Expression => shrink(x)
   }
@@ -202,6 +212,13 @@ object Shrinkers {
 
   implicit def shrinkBreak: Shrink[Break] = Shrink {
     case x@Break(label) => for (v <- shrinkOption(shrinkName).shrink(label)) yield x.copy(label = v)
+  }
+
+  implicit def shrinkSwitch: Shrink[Switch] = Shrink {
+    case x@Switch(expression, groups, default) =>
+      (for (v <- shrink(expression)) yield x.copy(expression = v)) append
+      (for (v <- shrink(groups)) yield x.copy(groups = v)) append
+      (for (v <- shrink(default)) yield x.copy(default = v))
   }
 
   implicit def shrinkInstanceOf: Shrink[InstanceOf] = Shrink {
