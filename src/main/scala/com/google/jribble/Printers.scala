@@ -169,6 +169,10 @@ trait Printers {
     }
   }
 
+  implicit object ReturnPrinter extends Printer[Return] {
+    def apply(x: Return) = "return" + x.expression.map(" " + ExpressionPrinter(_)).getOrElse("")
+  }
+
   implicit object StatementPrinter extends Printer[Statement] {
     def apply(x: Statement) = x match {
       case x: VarDef => VarDefPrinter(x) + ";"
@@ -181,6 +185,7 @@ trait Printers {
       case x: Break => BreakPrinter(x) + ";"
       case x: Continue => ContinuePrinter(x) + ";"
       case x: Switch => SwitchPrinter(x)
+      case x: Return => ReturnPrinter(x) + ";"
     }
   }
 

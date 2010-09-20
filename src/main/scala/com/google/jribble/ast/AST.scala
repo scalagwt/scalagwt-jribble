@@ -80,6 +80,8 @@ case class Break(label: Option[String]) extends Statement
 
 case class Switch(expression: Expression, groups: List[(Literal, Block)], default: Option[Block]) extends Statement
 
+case class Return(expression: Option[Expression]) extends Statement
+
 case class SuperConstructorCall(signature: Signature, params: List[Expression]) extends Statement {
   def jparams: JList[Expression] = params
 }

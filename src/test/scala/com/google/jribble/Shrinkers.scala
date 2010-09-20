@@ -101,6 +101,7 @@ object Shrinkers {
         case None => Stream.empty[Statement]
       })
     }
+    case x: Return => shrink(x)
     case x: SuperConstructorCall => shrink(x)
     case x: Expression => shrink(x)
   }
@@ -219,6 +220,10 @@ object Shrinkers {
       (for (v <- shrink(expression)) yield x.copy(expression = v)) append
       (for (v <- shrink(groups)) yield x.copy(groups = v)) append
       (for (v <- shrink(default)) yield x.copy(default = v))
+  }
+
+  implicit def shrinkReturn: Shrink[Return] = Shrink {
+    case x@Return(expression) => for (v <- shrink(expression)) yield x.copy(expression = v)
   }
 
   implicit def shrinkInstanceOf: Shrink[InstanceOf] = Shrink {

@@ -143,11 +143,16 @@ object Generators {
     } yield Switch(e, gs, default)
   }
 
+  def returnStatement: Gen[Return] = for {
+    e <- Arbitrary.arbOption(Arbitrary(expression(ExprDepth(0)))).arbitrary
+  } yield Return(e)
+
   def methodStatement(implicit depth: StmtDepth): Gen[Statement] = {
     val nonRecursive = Gen.frequency(
       (15, Gen.oneOf(varDef, assignment, expression(ExprDepth(0)))),
       (1, continueStatement),
-      (1, breakStatement))
+      (1, breakStatement),
+      (1, returnStatement))
     val newDepth = depth.map(_+1)
     val recursive = Gen.oneOf(Gen.lzy(ifStatement(newDepth)), Gen.lzy(tryStatement(newDepth)),
       Gen.lzy(whileStatement(newDepth)), Gen.lzy(switchStatement(newDepth)))
@@ -249,6 +254,7 @@ object Generators {
   implicit val arbContinue = Arbitrary(continueStatement)
   implicit val arbBreak = Arbitrary(breakStatement)
   implicit val arbSwitch = Arbitrary(switchStatement(StmtDepth(0)))
+  implicit val arbReturn = Arbitrary(returnStatement)
   implicit val arbMethodStatement = Arbitrary(methodStatement(StmtDepth(0)))
   implicit val arbMethodBody = Arbitrary(methodBody) 
   implicit val arbConstructor = Arbitrary(constructor)
