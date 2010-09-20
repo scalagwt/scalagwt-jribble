@@ -91,12 +91,15 @@ object Generators {
 
   def cast(implicit depth: ExprDepth): Gen[Cast] = for (on <- expression; t <- ref) yield Cast(on, t)
 
+  def arrayInitializer(implicit depth: ExprDepth): Gen[ArrayInitializer] =
+    for (t <- typ; elements <- Gen.listOf(expression)) yield ArrayInitializer(t, elements)
+
   def expression(implicit depth: ExprDepth): Gen[Expression] = {
     val nonRecursive = Gen.frequency((2, literal), (1, varRef), (1, Gen.value(ThisRef)))
     val newDepth = depth.map(_+1)
     val recursive = Gen.oneOf(Gen.lzy(newCall(newDepth)), Gen.lzy(methodCall(newDepth)),
       Gen.lzy(staticMethodCall(newDepth)), Gen.lzy(conditional(newDepth)), Gen.lzy(instanceOf(newDepth)),
-      Gen.lzy(cast(newDepth)))
+      Gen.lzy(cast(newDepth)), Gen.lzy(arrayInitializer(newDepth)))
 
     Gen.frequency((3*(depth.x+1), nonRecursive), (1, recursive))
   }
@@ -227,6 +230,7 @@ object Generators {
   implicit val arbConditional = Arbitrary(conditional(ExprDepth(0)))
   implicit val arbInstanceOf = Arbitrary(instanceOf(ExprDepth(0)))
   implicit val arbCast = Arbitrary(cast(ExprDepth(0)))
+  implicit val arbArrayInitializer = Arbitrary(arrayInitializer(ExprDepth(0)))
   implicit val arbExpression = Arbitrary(expression(ExprDepth(0)))
   implicit val arbVarDef = Arbitrary(varDef)
   implicit val arbAssignment = Arbitrary(assignment)

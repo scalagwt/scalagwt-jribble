@@ -180,10 +180,13 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
   lazy val cast: PackratParser[Cast] = expression ~ ("." ~> "<" ~> "cast" ~> ">" ~> ("(" ~> ref <~ ")")) ^^ Cast
 
+  lazy val arrayInitializer: PackratParser[ArrayInitializer] =
+    ("<" ~> typ <~ ">") ~ ("{" ~> repsep(expression, ",") <~ "}") ^^ ArrayInitializer
+
   lazy val expression: PackratParser[Expression] = {
     val thisRef: Parser[Expression] = "this" ^^^ ThisRef
     val varRef: Parser[VarRef] = ident ^^ (VarRef)
-    methodCall | instanceOf | cast | staticCall | newCall | conditional | literal | thisRef | varRef
+    methodCall | instanceOf | cast | arrayInitializer | staticCall | newCall | conditional | literal | thisRef | varRef
   }
 
   lazy val signature: Parser[Signature] = "(" ~> ((ref <~ "::") ~ name) ~!

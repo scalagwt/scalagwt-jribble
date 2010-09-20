@@ -108,6 +108,11 @@ trait Printers {
     def apply(x: Cast) = ExpressionPrinter(x.on) + "." + "<cast>" + "(" + RefPrinter(x.typ) + ")"
   }
 
+  implicit object ArrayInitializerPrinter extends Printer[ArrayInitializer] {
+    def apply(x: ArrayInitializer) =
+      "<" + TypePrinter(x.typ) + ">" + x.elements.map(ExpressionPrinter).mkString("{", ", ", "}")
+  }
+
   implicit object ExpressionPrinter extends Printer[Expression] {
     def apply(x: Expression) = x match {
       case x: Literal => LiteralPrinter(x)
@@ -119,6 +124,7 @@ trait Printers {
       case x: Conditional => ConditionalPrinter(x)
       case x: InstanceOf => InstanceOfPrinter(x)
       case x: Cast => CastPrinter(x)
+      case x: ArrayInitializer => ArrayInitializerPrinter(x)
     }
   }
 

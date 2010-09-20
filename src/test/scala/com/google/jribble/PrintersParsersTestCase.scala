@@ -71,6 +71,8 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
 //  property("instanceof") = checkPrinterParser(printers.InstanceOfPrinter, parsers.instanceOf)
 //  property("cast") = checkPrinterParser(printers.CastPrinter, parsers.cast)
 
+  property("arrayInitializer") = checkPrinterParser(printers.ArrayInitializerPrinter, parsers.arrayInitializer)
+
   property("expression") = checkPrinterParser(printers.ExpressionPrinter, parsers.expression)
 
   property("varDef") = checkPrinterParser(printers.VarDefPrinter, parsers.varDef)

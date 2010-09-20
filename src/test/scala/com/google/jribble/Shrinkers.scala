@@ -156,6 +156,9 @@ object Shrinkers {
     case x@Cast(on, _) =>
       shrink(x) append
       shrink(on)
+    case x@ArrayInitializer(_, elements) =>
+      shrink(x) append
+      elements.map(shrink(_)).foldLeft(Stream.empty[Expression])(interleave)  
   }
 
   implicit def shrinkMethodCall: Shrink[MethodCall] = Shrink {
@@ -211,6 +214,12 @@ object Shrinkers {
     case x@Cast(on, typ) =>
       (for (v <- shrink(on)) yield x.copy(on = v)) append
       (for (v <- shrink(typ)) yield x.copy(typ = v))
+  }
+
+  implicit def shrinkArrayInitializer: Shrink[ArrayInitializer] = Shrink {
+    case x@ArrayInitializer(typ, elements) =>
+      (for (v <- shrink(typ)) yield x.copy(typ = v)) append
+      (for (v <- shrink(elements)) yield x.copy(elements = v))
   }
 
   implicit def shrinkLiteral: Shrink[Literal] = Shrink { x: Literal =>
