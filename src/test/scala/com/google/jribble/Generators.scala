@@ -185,7 +185,7 @@ object Generators {
   def methodBody: Gen[Block] = block(StmtDepth(0))
   def returnType = typ | Void
   def methodModifiers: Gen[Set[String]] = {
-    val modif = Gen.oneOf("public", "final", "static")
+    val modif = Gen.oneOf("public", "final", "static", "private", "protected", "abstract")
     Gen.resize(3, Gen.listOf(modif)).map(_.toSet)
   }
   def methodDef: Gen[MethodDef] =
@@ -194,7 +194,7 @@ object Generators {
 
   def fieldDef: Gen[FieldDef] = {
     def modifiers: Gen[Set[String]] = {
-      val modif = Gen.oneOf("public", "final", "static", "private")
+      val modif = Gen.oneOf("public", "final", "static", "private", "protected")
       Gen.resize(3, Gen.listOf(modif)).map(_.toSet)
     }
     import Arbitrary._

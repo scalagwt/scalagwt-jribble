@@ -41,7 +41,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     rep(accept("modifier", { case Keyword(x) if allowed contains x => x }))
 
   val classModifs: Parser[Set[String]] = {
-    val allowed = Set("public", "final")
+    val allowed = Set("public", "final", "abstract")
     modifs(allowed).map(_.toSet)
   }
 
@@ -127,14 +127,14 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
   def constructor: Parser[Constructor] = ("public" ~> name ~ paramsDef) ~! constructorBody ^^ Constructor
 
   val methodModifs: Parser[Set[String]] = {
-    val allowed = Set("public", "final", "static")
+    val allowed = Set("public", "final", "static", "private", "protected", "abstract")
     modifs(allowed).map(_.toSet)
   }
 
   def methodDef: Parser[MethodDef] = (methodModifs ~ returnType ~ name ~ paramsDef) ~! methodBody ^^ MethodDef
 
   val fieldModifs: Parser[Set[String]] = {
-    val allowed = Set("public", "final", "static", "private")
+    val allowed = Set("public", "final", "static", "private", "protected")
     modifs(allowed).map(_.toSet)
   }
 
@@ -255,6 +255,7 @@ object Parsers {
                       "extends", "implements", "static", "super", "this",
                       "new", "false", "true", "if", "else", "instanceof",
                       "cast", "private", "try", "catch", "finally", "while",
-                      "continue", "break", "switch", "default", "return")
+                      "continue", "break", "switch", "default", "return",
+                      "protected")
   val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "::", ".", ",", "=", "<", ">")
 }
