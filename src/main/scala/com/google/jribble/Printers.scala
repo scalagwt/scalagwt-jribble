@@ -113,6 +113,14 @@ trait Printers {
       "<" + TypePrinter(x.typ) + ">" + x.elements.map(ExpressionPrinter).mkString("{", ", ", "}")
   }
 
+  implicit object FieldRefPrinter extends Printer[FieldRef] {
+    def apply(x: FieldRef) = ExpressionPrinter(x.on) + ".(" + TypePrinter(x.onType) + ")" + x.name
+  }
+
+  implicit object StaticFieldRefPrinter extends Printer[StaticFieldRef] {
+    def apply(x: StaticFieldRef) = RefPrinter(x.on) + "." + x.name
+  }
+
   implicit object ExpressionPrinter extends Printer[Expression] {
     def apply(x: Expression) = x match {
       case x: Literal => LiteralPrinter(x)
@@ -125,6 +133,8 @@ trait Printers {
       case x: InstanceOf => InstanceOfPrinter(x)
       case x: Cast => CastPrinter(x)
       case x: ArrayInitializer => ArrayInitializerPrinter(x)
+      case x: FieldRef => FieldRefPrinter(x)
+      case x: StaticFieldRef => StaticFieldRefPrinter(x)
     }
   }
 

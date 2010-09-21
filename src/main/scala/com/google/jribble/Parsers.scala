@@ -193,10 +193,15 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
   lazy val arrayInitializer: PackratParser[ArrayInitializer] =
     ("<" ~> typ <~ ">") ~ ("{" ~> repsep(expression, ",") <~ "}") ^^ ArrayInitializer
 
+  lazy val fieldRef: PackratParser[FieldRef] = (expression <~ ".") ~ ("(" ~> ref <~ ")") ~ name ^^ FieldRef
+
+  val staticFieldRef: Parser[StaticFieldRef] = (ref <~ ".") ~ name ^^ StaticFieldRef
+
   lazy val expression: PackratParser[Expression] = {
     val thisRef: Parser[Expression] = "this" ^^^ ThisRef
     val varRef: Parser[VarRef] = ident ^^ (VarRef)
-    methodCall | instanceOf | cast | arrayInitializer | staticCall | newCall | conditional | literal | thisRef | varRef
+    (methodCall | instanceOf | cast | fieldRef | staticFieldRef | arrayInitializer | staticCall | newCall |
+      conditional | literal | thisRef | varRef)
   }
 
   lazy val signature: Parser[Signature] = "(" ~> ((ref <~ "::") ~ name) ~!

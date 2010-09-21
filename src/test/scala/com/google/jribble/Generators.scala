@@ -92,14 +92,19 @@ object Generators {
   def cast(implicit depth: ExprDepth): Gen[Cast] = for (on <- expression; t <- ref) yield Cast(on, t)
 
   def arrayInitializer(implicit depth: ExprDepth): Gen[ArrayInitializer] =
-    for (t <- typ; elements <- Gen.listOf(expression)) yield ArrayInitializer(t, elements)
+    for (t <- typ; elements <- Gen.resize(3,Gen.listOf(expression))) yield ArrayInitializer(t, elements)
+
+  def fieldRef(implicit depth: ExprDepth): Gen[FieldRef] =
+    for (on <- expression; t <- typ; n <- identifier) yield FieldRef(on, t, n)
+
+  def staticFieldRef: Gen[StaticFieldRef] = for (on <- ref; n <- identifier) yield StaticFieldRef(on, n)
 
   def expression(implicit depth: ExprDepth): Gen[Expression] = {
-    val nonRecursive = Gen.frequency((2, literal), (1, varRef), (1, Gen.value(ThisRef)))
+    val nonRecursive = Gen.frequency((5, literal), (1, varRef), (1, Gen.value(ThisRef)), (1, staticFieldRef))
     val newDepth = depth.map(_+1)
     val recursive = Gen.oneOf(Gen.lzy(newCall(newDepth)), Gen.lzy(methodCall(newDepth)),
       Gen.lzy(staticMethodCall(newDepth)), Gen.lzy(conditional(newDepth)), Gen.lzy(instanceOf(newDepth)),
-      Gen.lzy(cast(newDepth)), Gen.lzy(arrayInitializer(newDepth)))
+      Gen.lzy(cast(newDepth)), Gen.lzy(arrayInitializer(newDepth)), Gen.lzy(fieldRef(newDepth)))
 
     Gen.frequency((3*(depth.x+1), nonRecursive), (1, recursive))
   }
@@ -192,7 +197,7 @@ object Generators {
   }
 
   def classModifiers: Gen[Set[String]] = {
-    val modif = Gen.oneOf("public", "final")
+    val modif = Gen.oneOf("public", "final", "abstract")
     Gen.resize(2, Gen.listOf(modif)).map(_.toSet)
   }
 
@@ -245,6 +250,8 @@ object Generators {
   implicit val arbInstanceOf = Arbitrary(instanceOf(ExprDepth(0)))
   implicit val arbCast = Arbitrary(cast(ExprDepth(0)))
   implicit val arbArrayInitializer = Arbitrary(arrayInitializer(ExprDepth(0)))
+  implicit val arbFieldRef = Arbitrary(fieldRef(ExprDepth(0)))
+  implicit val arbStaticFieldRef = Arbitrary(staticFieldRef)
   implicit val arbExpression = Arbitrary(expression(ExprDepth(0)))
   implicit val arbVarDef = Arbitrary(varDef)
   implicit val arbAssignment = Arbitrary(assignment)

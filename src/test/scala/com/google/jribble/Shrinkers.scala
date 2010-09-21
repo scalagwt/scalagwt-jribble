@@ -170,6 +170,10 @@ object Shrinkers {
     case x@ArrayInitializer(_, elements) =>
       shrink(x) append
       elements.map(shrink(_)).foldLeft(Stream.empty[Expression])(interleave)  
+    case x@FieldRef(on, _, _) =>
+      shrink(x) append
+      shrink(on)
+    case x: StaticFieldRef => shrink(x)
   }
 
   implicit def shrinkMethodCall: Shrink[MethodCall] = Shrink {
@@ -242,6 +246,19 @@ object Shrinkers {
     case x@ArrayInitializer(typ, elements) =>
       (for (v <- shrink(typ)) yield x.copy(typ = v)) append
       (for (v <- shrink(elements)) yield x.copy(elements = v))
+  }
+
+  implicit def shrinkFieldRef: Shrink[FieldRef] = Shrink {
+    case x@FieldRef(on, onType, name) =>
+      (for (v <- shrink(on)) yield x.copy(on = v)) append
+      (for (v <- shrink(onType)) yield x.copy(onType = v)) append
+      (for (v <- shrinkName.shrink(name)) yield x.copy(name = v))
+  }
+
+  implicit def shrinkStaticFieldRef: Shrink[StaticFieldRef] = Shrink {
+    case x@StaticFieldRef(on, name) =>
+      (for (v <- shrink(on)) yield x.copy(on = v)) append
+      (for (v <- shrinkName.shrink(name)) yield x.copy(name = v))
   }
 
   implicit def shrinkLiteral: Shrink[Literal] = Shrink { x: Literal =>

@@ -122,6 +122,9 @@ case class InstanceOf(on: Expression, typ: Ref) extends Expression
 
 case class Cast(on: Expression, typ: Ref) extends Expression
 
+case class FieldRef(on: Expression, onType: Type, name: String) extends Expression
+case class StaticFieldRef(on: Ref, name: String) extends Expression
+
 sealed abstract class Type extends AST
 case class Ref(pkg: Option[Package], name: String) extends Type {
   def javaName: String = pkg.map(_.name.replace("/", ".") + ".").getOrElse("") + name
