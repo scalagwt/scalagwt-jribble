@@ -109,7 +109,12 @@ object Generators {
     Gen.frequency((3*(depth.x+1), nonRecursive), (1, recursive))
   }
 
-  def varDef: Gen[VarDef] = for (t <- typ; n <- identifier; v <- expression(ExprDepth(0))) yield VarDef(t, n, v)
+  def varDef: Gen[VarDef] = for {
+    t <- typ
+    n <- identifier;
+    v <- Arbitrary.arbOption(Arbitrary(expression(ExprDepth(0)))).arbitrary
+  } yield VarDef(t, n, v)
+
   def assignment: Gen[Assignment] = for (n <- identifier; v <- expression(ExprDepth(0))) yield Assignment(n, v)
   def ifStatement(implicit depth: StmtDepth): Gen[If] = for {
     condition <- expression(ExprDepth(0));

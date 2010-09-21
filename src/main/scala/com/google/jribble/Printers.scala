@@ -54,7 +54,8 @@ trait Printers {
   }
 
   implicit object VarDefPrinter extends Printer[VarDef] {
-    def apply(x: VarDef) = TypePrinter(x.typ) + " " + x.name + " = " + ExpressionPrinter(x.value)
+    def apply(x: VarDef) = TypePrinter(x.typ) + " " + x.name + x.value.map(x => " = " +
+            ExpressionPrinter(x)).getOrElse("")
   }
 
   implicit object AssignmentPrinter extends Printer[Assignment] {

@@ -144,7 +144,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
   def returnType: Parser[Type] =   VoidType | typ
 
-  def varDef: Parser[VarDef] = typ ~ (ident <~ "=") ~ expression ^^ VarDef
+  def varDef: Parser[VarDef] = typ ~ ident ~ opt("=" ~> expression) ^^ VarDef
 
   def methodStatement: Parser[Statement] =
     ifStatement | tryStatement | whileStatement | switchStatement |
