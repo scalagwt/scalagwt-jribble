@@ -59,7 +59,7 @@ trait Printers {
   }
 
   implicit object AssignmentPrinter extends Printer[Assignment] {
-    def apply(x: Assignment) = x.name + " = " + ExpressionPrinter(x.value)
+    def apply(x: Assignment) = ExpressionPrinter(x.lhs) + " = " + ExpressionPrinter(x.rhs)
   }
 
   //todo (grek): implement printing of literals

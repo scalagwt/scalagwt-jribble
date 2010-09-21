@@ -121,7 +121,12 @@ object Generators {
     v <- Arbitrary.arbOption(Arbitrary(expression(ExprDepth(0)))).arbitrary
   } yield VarDef(t, n, v)
 
-  def assignment: Gen[Assignment] = for (n <- identifier; v <- expression(ExprDepth(0))) yield Assignment(n, v)
+  def assignment: Gen[Assignment] = {
+    implicit val depth = ExprDepth(0)
+    val lhs: Gen[Expression] = Gen.oneOf(varRef, staticFieldRef, fieldRef)
+    for (l <- lhs; r <- expression) yield Assignment(l, r)
+  }
+
   def ifStatement(implicit depth: StmtDepth): Gen[If] = for {
     condition <- expression(ExprDepth(0));
     then <- block;

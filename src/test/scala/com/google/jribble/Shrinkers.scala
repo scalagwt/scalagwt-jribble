@@ -114,9 +114,9 @@ object Shrinkers {
   }
 
   implicit def shrinkAssignment: Shrink[Assignment] = Shrink {
-    case x@Assignment(name, value) =>
-      (for (v <- shrinkName.shrink(name)) yield x.copy(name = v)) append
-      (for (v <- shrink(value)) yield x.copy(value = v))
+    case x@Assignment(lhs, rhs) =>
+      (for (v <- shrink(lhs)) yield x.copy(lhs = v)) append
+      (for (v <- shrink(rhs)) yield x.copy(rhs = v))
   }
 
   implicit def shrinkSuperConstructorCall: Shrink[SuperConstructorCall] = Shrink {

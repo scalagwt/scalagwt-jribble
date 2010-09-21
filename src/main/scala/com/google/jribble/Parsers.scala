@@ -247,7 +247,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     noParams | atLeastOneParam
   }
 
-  def assignment: Parser[Assignment] = ident ~ ("=" ~> expression) ^^ Assignment
+  def assignment: Parser[Assignment] = expression ~ ("=" ~> expression) ^^ Assignment
 
   //todo (grek): implement parsing of all literals, recheck what we already have and make it less hacky
   def literal: Parser[Literal] = {
