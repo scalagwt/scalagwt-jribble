@@ -9,6 +9,7 @@ class Lexer extends StdLexical with JribbleTokens {
   override def token: Parser[Token] =
     ( identChar ~ rep( identChar | digit )              ^^ { case first ~ rest => processIdent(first :: rest mkString "") }
     | digit ~ rep( digit )                              ^^ { case first ~ rest => NumericLit(first :: rest mkString "") }
+    | '-' ~> digit ~ rep( digit )                       ^^ { case first ~ rest => NumericLit("-" :: first :: rest mkString "") }
     | '\'' ~ chrExcept('\'', '\n', EofCh) ~ '\'' ^^ { case '\'' ~ char ~ '\'' => CharLit(char) }
     | '\"' ~ rep( chrExcept('\"', '\n', EofCh) ) ~ '\"' ^^ { case '\"' ~ chars ~ '\"' => StringLit(chars mkString "") }
     | EofCh                                             ^^^ EOF

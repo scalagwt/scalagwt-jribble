@@ -64,7 +64,8 @@ object Generators {
     //support for encoding all chars
     val charLiteral = for (x <- Gen.alphaNumChar) yield CharLiteral(x)
     val booleanLiteral = for (x <- arbitrary[Boolean]) yield BooleanLiteral(x)
-    stringLiteral | charLiteral | booleanLiteral
+    val intLiteral = for (x <- arbitrary[Int]) yield IntLiteral(x)
+    stringLiteral | charLiteral | booleanLiteral | intLiteral
   }
   def varRef = identifier.map(VarRef)
   def signature: Gen[Signature] = for {

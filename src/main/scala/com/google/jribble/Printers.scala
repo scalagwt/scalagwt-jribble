@@ -69,6 +69,7 @@ trait Printers {
       //todo (grek): implement escaping
       case StringLiteral(v) => "\"" + v + "\""
       case BooleanLiteral(v) => v.toString
+      case IntLiteral(v) => v.toString
       case _ => error("to be implemented")
     }
   }
