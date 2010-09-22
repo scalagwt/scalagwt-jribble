@@ -170,7 +170,7 @@ object Shrinkers {
       shrink(on)
     case x@ArrayInitializer(_, elements) =>
       shrink(x) append
-      elements.map(shrink(_)).foldLeft(Stream.empty[Expression])(interleave)  
+      elements.map(shrink(_)).foldLeft(Stream.empty[Expression])(interleave)
     case x@FieldRef(on, _, _) =>
       shrink(x) append
       shrink(on)
