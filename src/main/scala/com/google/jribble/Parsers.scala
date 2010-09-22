@@ -113,18 +113,16 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
   def methodBody: Parser[Block] = block
 
-  def superConstructorCallStatement: Parser[SuperConstructorCall] = {
-    val superSignature = "(" ~> ((ref <~ "::") <~ "super") ~! ("(" ~> (typ *) <~ ")") ~! VoidType <~ ")" ^^ {
-      case on ~ paramTypes ~ returnType => Signature(on, "super", paramTypes, returnType)
+  def superConstructorCallStatement: Parser[SuperConstructorCall] =
+    (superConstructorSignature ~! params <~ ";") ^^ {
+      case signature ~ params => SuperConstructorCall(signature, params)
     }
-    (superSignature ~! params <~ ";") ^^ { case signature ~ params => SuperConstructorCall(signature, params) }
-  }
+
   def constructorBody: Parser[Block] =
     statements(superConstructorCallStatement | methodStatement) ^^ (Block(_))
 
   //todo (grek): hard-coded "public"
-  //todo (grek): should we check if the name of enclosing class watches constructor's name?
-  def constructor: Parser[Constructor] = ("public" ~> name ~ paramsDef) ~! constructorBody ^^ Constructor
+  def constructor: Parser[Constructor] = ("public" ~> "this" ~ paramsDef) ~! constructorBody ^^ Constructor
 
   val methodModifs: Parser[Set[String]] = {
     val allowed = Set("public", "final", "static", "private", "protected", "abstract")
@@ -191,9 +189,9 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
   val varRef: Parser[VarRef] = ident ^^ (VarRef)
 
   val staticFieldRef: Parser[StaticFieldRef] = (ref <~ ".") ~ name ^^ StaticFieldRef
-  val staticCall: Parser[StaticMethodCall] = (ref ~ ("." ~> signature) ~! params) ^^ StaticMethodCall
+  val staticCall: Parser[StaticMethodCall] = (ref ~ ("." ~> methodSignature) ~! params) ^^ StaticMethodCall
 
-  val newCall: Parser[NewCall] = ("new" ~> signature ~! params) ^^ NewCall
+  val newCall: Parser[NewCall] = ("new" ~> constructorSignature ~! params) ^^ NewCall
 
   /**
    * Object that groups expressions that are interdependent.
@@ -204,7 +202,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
    * operators with second highest precedence, etc.
    */
   object Expressions {
-    lazy val methodCall: PackratParser[MethodCall] = expr1 ~ ("." ~> signature) ~! params ^^ MethodCall
+    lazy val methodCall: PackratParser[MethodCall] = expr1 ~ ("." ~> methodSignature) ~! params ^^ MethodCall
     lazy val instanceOf: PackratParser[InstanceOf] = expr1 ~
           ("." ~> "<" ~> "instanceof" ~> ">" ~> ("(" ~> ref <~ ")")) ^^ InstanceOf
     lazy val cast: PackratParser[Cast] = expr1 ~ ("." ~> "<" ~> "cast" ~> ">" ~> ("(" ~> ref <~ ")")) ^^ Cast
@@ -241,7 +239,11 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
   lazy val expression: PackratParser[Expression] = Expressions.expr6
 
-  lazy val signature: Parser[Signature] = "(" ~> ((ref <~ "::") ~ name) ~!
+  val methodSignature = signature(name)
+  val constructorSignature = signature("this")
+  val superConstructorSignature = signature("super")
+
+  def signature(name: Parser[String]): Parser[Signature] = "(" ~> ((ref <~ "::") ~ name) ~!
           ("(" ~> (typ *) <~ ")") ~! returnType <~ ")" ^^ Signature
 
   val params: Parser[List[Expression]] = {

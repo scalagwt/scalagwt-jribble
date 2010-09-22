@@ -37,11 +37,11 @@ class JribbleSampleTestCase {
     val input = """public class Lcom/google/gwt/sample/jribble/client/Hello; extends Ljava/lang/Object; implements Lcom/google/gwt/core/client/EntryPoint;, Lscala/ScalaObject; {
 
   public V; onModuleLoad() {
-    Lcom/google/gwt/user/client/ui/Button; b = new (Lcom/google/gwt/user/client/ui/Button;::Button(Ljava/lang/String;Lcom/google/gwt/event/dom/client/ClickHandler;)V;)("Click me", new (Lcom/google/gwt/sample/jribble/client/Hello$$anon$1;::Hello$$anon$1(Lcom/google/gwt/sample/jribble/client/Hello;)V;)(this));
+    Lcom/google/gwt/user/client/ui/Button; b = new (Lcom/google/gwt/user/client/ui/Button;::this(Ljava/lang/String;Lcom/google/gwt/event/dom/client/ClickHandler;)V;)("Click me", new (Lcom/google/gwt/sample/jribble/client/Hello$$anon$1;::this(Lcom/google/gwt/sample/jribble/client/Hello;)V;)(this));
     Lcom/google/gwt/user/client/ui/RootPanel;.(Lcom/google/gwt/user/client/ui/RootPanel;::get()Lcom/google/gwt/user/client/ui/RootPanel;)().(Lcom/google/gwt/user/client/ui/AbsolutePanel;::add(Lcom/google/gwt/user/client/ui/Widget;)V;)(b);
   }
 
-  public Hello() {
+  public this() {
     (Ljava/lang/Object;::super()V;)();
   }
 }
@@ -63,7 +63,7 @@ class JribbleSampleTestCase {
     Lcom/google/gwt/user/client/Window;.(Lcom/google/gwt/user/client/Window;::alert(Ljava/lang/String;)V;)("Hello, AJAX");
   }
 
-  public Hello$$anon$1(Lcom/google/gwt/sample/jribble/client/Hello; $outer) {
+  public this(Lcom/google/gwt/sample/jribble/client/Hello; $outer) {
     (Ljava/lang/Object;::super()V;)();
   }
 }

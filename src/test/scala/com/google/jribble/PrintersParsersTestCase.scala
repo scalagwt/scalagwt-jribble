@@ -58,7 +58,7 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
 
   property("literal") = checkPrinterParser(printers.LiteralPrinter, parsers.literal)
 
-  property("signature") = checkPrinterParser(printers.SignaturePrinter, parsers.signature)
+  property("signature") = checkPrinterParser(printers.SignaturePrinter, parsers.signature(parsers.name))
 
   property("newCall") = checkPrinterParser(printers.NewCallPrinter, parsers.newCall)
 

@@ -75,7 +75,9 @@ object Generators {
     r <- returnType
   } yield Signature(on, n, paramTypes, r)
   
-  def newCall(implicit depth: ExprDepth): Gen[NewCall] = for (s <- signature; p <- params) yield NewCall(s, p)
+  def newCall(implicit depth: ExprDepth): Gen[NewCall] =
+    for (s <- signature; p <- params) yield NewCall(s.copy(name = "this"), p)
+
   def methodCall(implicit depth: ExprDepth): Gen[MethodCall] =
     for (on <- expression; s <- signature; p <- params) yield MethodCall(on, s, p)
   def staticMethodCall(implicit depth: ExprDepth): Gen[StaticMethodCall] =
@@ -197,7 +199,7 @@ object Generators {
       ss <- methodStatements(StmtDepth(0))
     } yield Block(scala.util.Random.shuffle(s ::: ss))
   def constructor: Gen[Constructor] =
-    for (n <- identifier; p <- paramsDef; b <- constructorBody) yield Constructor(n, p, b)
+    for (p <- paramsDef; b <- constructorBody) yield Constructor("this", p, b)
 
   def block(implicit depth: StmtDepth): Gen[Block] = methodStatements map (Block(_))
   def methodBody: Gen[Block] = block(StmtDepth(0))
