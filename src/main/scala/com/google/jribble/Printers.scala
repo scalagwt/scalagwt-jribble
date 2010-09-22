@@ -84,8 +84,7 @@ trait Printers {
   }
 
   implicit object NewCallPrinter extends Printer[NewCall] {
-    def apply(x: NewCall) = "new " + SignaturePrinter(x.signature) +
-            ParamsPrinter(x.params)
+    def apply(x: NewCall) = "new " + ConstructorCallPrinter(x.constructor)
   }
 
   implicit object MethodCallPrinter extends Printer[MethodCall] {
@@ -167,8 +166,8 @@ trait Printers {
     }
   }
 
-  implicit object SuperConstructorCall extends Printer[SuperConstructorCall] {
-    def apply(x: SuperConstructorCall) = SignaturePrinter(x.signature) + ParamsPrinter(x.params)
+  implicit object ConstructorCallPrinter extends Printer[ConstructorCall] {
+    def apply(x: ConstructorCall) = SignaturePrinter(x.signature) + ParamsPrinter(x.params)
   }
 
   implicit object IfPrinter extends Printer[If] {
@@ -221,7 +220,7 @@ trait Printers {
       case x: VarDef => VarDefPrinter(x) + ";"
       case x: Assignment => AssignmentPrinter(x) + ";"
       case x: Expression => ExpressionPrinter(x) + ";"
-      case x: SuperConstructorCall => SuperConstructorCall(x) + ";"
+      case x: ConstructorCall => ConstructorCallPrinter(x) + ";"
       case x: If => IfPrinter(x)
       case x: Try => TryPrinter(x)
       case x: While => WhilePrinter(x)

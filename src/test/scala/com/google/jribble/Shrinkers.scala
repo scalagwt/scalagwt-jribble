@@ -103,7 +103,7 @@ object Shrinkers {
     }
     case x: Return => shrink(x)
     case x: Throw => shrink(x)
-    case x: SuperConstructorCall => shrink(x)
+    case x: ConstructorCall => shrink(x)
     case x: Expression => shrink(x)
   }
 
@@ -120,8 +120,8 @@ object Shrinkers {
       (for (v <- shrink(rhs)) yield x.copy(rhs = v))
   }
 
-  implicit def shrinkSuperConstructorCall: Shrink[SuperConstructorCall] = Shrink {
-    case x@SuperConstructorCall(signature, params) =>
+  implicit def shrinkConstructorCall: Shrink[ConstructorCall] = Shrink {
+    case x@ConstructorCall(signature, params) =>
       (for (v <- shrink(signature)) yield x.copy(signature = v)) append
       (for (v <- shrink(params)) yield x.copy(params = v))
   }
@@ -134,9 +134,7 @@ object Shrinkers {
   }
 
   implicit def shrinkNewCall: Shrink[NewCall] = Shrink {
-    case x@NewCall(signature, params) =>
-      (for (v <- shrink(params)) yield x.copy(params = v)) append
-      (for (v <- shrink(signature)) yield x.copy(signature = v))
+    case x@NewCall(constructor) => for (v <- shrink(constructor)) yield x.copy(constructor = v)
   }
 
   implicit def shrinkVarRef: Shrink[VarRef] = Shrink {
@@ -153,7 +151,7 @@ object Shrinkers {
     case x@StaticMethodCall(_, _, params) =>
       shrink(x) append
       params.map(shrink(_)).foldLeft(Stream.empty[Expression])(interleave)  
-    case x@NewCall(_, params) =>
+    case x@NewCall(ConstructorCall(_, params)) =>
       shrink(x) append
       params.map(shrink(_)).foldLeft(Stream.empty[Expression])(interleave)
     case x: Literal => shrink(x)
@@ -299,7 +297,8 @@ object Shrinkers {
   }
 
   private val shrinkName: Shrink[String] = Shrink { s =>
-    shrink(s).filterNot(_.isEmpty)
+    def isKeyword(s: String) = Parsers.reserved contains s
+    if (isKeyword(s)) Stream.empty else shrink(s).filterNot(_.isEmpty)
   }
 
   /**

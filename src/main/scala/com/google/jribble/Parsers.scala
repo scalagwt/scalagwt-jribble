@@ -113,13 +113,11 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
   def methodBody: Parser[Block] = block
 
-  def superConstructorCallStatement: Parser[SuperConstructorCall] =
-    (superConstructorSignature ~! params <~ ";") ^^ {
-      case signature ~ params => SuperConstructorCall(signature, params)
-    }
+  def constructorCall(name: Parser[String]): Parser[ConstructorCall] = signature(name) ~! params ^^ ConstructorCall
 
-  def constructorBody: Parser[Block] =
-    statements(superConstructorCallStatement | methodStatement) ^^ (Block(_))
+  val constructorCallStatement: Parser[ConstructorCall] = constructorCall("super" | "this") <~ ";"
+
+  def constructorBody: Parser[Block] = statements(constructorCallStatement | methodStatement) ^^ (Block(_))
 
   //todo (grek): hard-coded "public"
   def constructor: Parser[Constructor] = ("public" ~> "this" ~ paramsDef) ~! constructorBody ^^ Constructor
@@ -191,7 +189,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
   val staticFieldRef: Parser[StaticFieldRef] = (ref <~ ".") ~ name ^^ StaticFieldRef
   val staticCall: Parser[StaticMethodCall] = (ref ~ ("." ~> methodSignature) ~! params) ^^ StaticMethodCall
 
-  val newCall: Parser[NewCall] = ("new" ~> constructorSignature ~! params) ^^ NewCall
+  val newCall: Parser[NewCall] = ("new" ~> constructorCall("this")) ^^ NewCall
 
   /**
    * Object that groups expressions that are interdependent.
@@ -240,8 +238,6 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
   lazy val expression: PackratParser[Expression] = Expressions.expr6
 
   val methodSignature = signature(name)
-  val constructorSignature = signature("this")
-  val superConstructorSignature = signature("super")
 
   def signature(name: Parser[String]): Parser[Signature] = "(" ~> ((ref <~ "::") ~ name) ~!
           ("(" ~> (typ *) <~ ")") ~! returnType <~ ")" ^^ Signature

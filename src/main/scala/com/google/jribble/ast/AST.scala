@@ -84,7 +84,7 @@ case class Return(expression: Option[Expression]) extends Statement
 
 case class Throw(expression: Expression) extends Statement
 
-case class SuperConstructorCall(signature: Signature, params: List[Expression]) extends Statement {
+case class ConstructorCall(signature: Signature, params: List[Expression]) extends Statement {
   def jparams: JList[Expression] = params
 }
 
@@ -110,9 +110,8 @@ case class ArrayInitializer(typ: Type, elements: List[Expression]) extends Expre
 case class Signature(on: Ref, name: String, paramTypes: List[Type], returnType: Type) extends AST {
   def jparamTypes: JList[Type] = paramTypes
 }
-case class NewCall(signature: Signature, params: List[Expression]) extends Expression {
+case class NewCall(constructor: ConstructorCall) extends Expression {
   val precedence = 2
-  def jparams: JList[Expression] = params
 }
 case class MethodCall(on: Expression, signature: Signature, params: List[Expression]) extends Expression {
   val precedence = 1

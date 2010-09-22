@@ -53,7 +53,7 @@ object Generators {
     Gen.resize(4, Gen.listOf(paramDef))
   }
 
-  def params: Gen[List[Expression]] = Gen.resize(4, Gen.listOf(expression(ExprDepth(0))))
+  def params(implicit depth: ExprDepth): Gen[List[Expression]] = Gen.resize(4, Gen.listOf(expression))
 
   //todo (grek): implement generation of all literals
   def literal: Gen[Literal] = {
@@ -68,20 +68,21 @@ object Generators {
     stringLiteral | charLiteral | booleanLiteral | intLiteral
   }
   def varRef = identifier.map(VarRef)
-  def signature: Gen[Signature] = for {
+  def signature(name: Gen[String]): Gen[Signature] = for {
     on <- ref
-    n <- identifier
+    n <- name
     paramTypes <- Gen.listOf(typ)
     r <- returnType
   } yield Signature(on, n, paramTypes, r)
+
+  val methodSignature = signature(identifier)
   
-  def newCall(implicit depth: ExprDepth): Gen[NewCall] =
-    for (s <- signature; p <- params) yield NewCall(s.copy(name = "this"), p)
+  def newCall(implicit depth: ExprDepth): Gen[NewCall] =  for (c <- thisConstructorCall) yield NewCall(c)
 
   def methodCall(implicit depth: ExprDepth): Gen[MethodCall] =
-    for (on <- expression; s <- signature; p <- params) yield MethodCall(on, s, p)
+    for (on <- expression; s <- methodSignature; p <- params) yield MethodCall(on, s, p)
   def staticMethodCall(implicit depth: ExprDepth): Gen[StaticMethodCall] =
-    for (c <- ref; s <- signature; p <- params) yield StaticMethodCall(c, s, p)
+    for (c <- ref; s <- methodSignature; p <- params) yield StaticMethodCall(c, s, p)
   def conditional(implicit depth: ExprDepth): Gen[Conditional] = for {
     condition <- expression
     typ <- typ
@@ -191,11 +192,13 @@ object Generators {
   def methodStatements(implicit depth: StmtDepth): Gen[List[Statement]] =
     Gen.resize(3, Gen.listOf(methodStatement))
 
-  def constructorSuperCall: Gen[SuperConstructorCall] =
-    for (s <- signature; p <- params) yield SuperConstructorCall(s.copy(name = "super", returnType = Void), p)
+  def superConstructorCall: Gen[ConstructorCall] =
+    for (s <- signature("super"); p <- params(ExprDepth(0))) yield ConstructorCall(s.copy(returnType = Void), p)
+  def thisConstructorCall(implicit depth: ExprDepth): Gen[ConstructorCall] =
+    for (s <- signature("this"); p <- params) yield ConstructorCall(s.copy(returnType = Void), p)
   //we shuffle the list because in jribble there is no requirement that super constructor call is
   def constructorBody: Gen[Block] = for {
-      s <- Gen.resize(1, Gen.listOf(constructorSuperCall))
+      s <- Gen.resize(1, Gen.listOf(superConstructorCall | thisConstructorCall(ExprDepth(0))))
       ss <- methodStatements(StmtDepth(0))
     } yield Block(scala.util.Random.shuffle(s ::: ss))
   def constructor: Gen[Constructor] =
@@ -267,7 +270,7 @@ object Generators {
   implicit val arbType = Arbitrary(typ)
   implicit val arbParamsDef = Arbitrary(paramsDef)
   implicit val arbLiteral = Arbitrary(literal)
-  implicit val arbSignature = Arbitrary(signature)
+  implicit val arbMethodSignature = Arbitrary(methodSignature)
   implicit val arbNewCall = Arbitrary(newCall(ExprDepth(0)))
   implicit val arbMethodCall = Arbitrary(methodCall(ExprDepth(0)))
   implicit val arbStaticMethodCall = Arbitrary(staticMethodCall(ExprDepth(0)))
