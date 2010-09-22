@@ -98,6 +98,8 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
 
   property("return") = checkPrinterParser(printers.ReturnPrinter, parsers.returnStatement)
 
+  property("throw") = checkPrinterParser(printers.ThrowPrinter, parsers.throwStatement)
+
   property("methodBody") = checkPrinterParser(printers.BlockPrinter, parsers.methodBody)
 
   property("constructorBody") = checkPrinterParser(printers.BlockPrinter, parsers.constructorBody)

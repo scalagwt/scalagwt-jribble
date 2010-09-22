@@ -82,6 +82,8 @@ case class Switch(expression: Expression, groups: List[(Literal, Block)], defaul
 
 case class Return(expression: Option[Expression]) extends Statement
 
+case class Throw(expression: Expression) extends Statement
+
 case class SuperConstructorCall(signature: Signature, params: List[Expression]) extends Statement {
   def jparams: JList[Expression] = params
 }

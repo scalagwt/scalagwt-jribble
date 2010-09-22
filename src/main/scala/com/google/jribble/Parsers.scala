@@ -148,7 +148,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
   def methodStatement: Parser[Statement] =
     ifStatement | tryStatement | whileStatement | switchStatement |
-    ((continueStatement | breakStatement | returnStatement | varDef | assignment | expression) <~ ";")
+    ((continueStatement | breakStatement | returnStatement | throwStatement | varDef | assignment | expression) <~ ";")
 
   def ifStatement: Parser[If] =
     ("if" ~> "(" ~> expression <~ ")") ~! block ~ opt("else" ~> block) ^^ If
@@ -181,6 +181,8 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
   }
 
   def returnStatement: Parser[Return] = "return" ~> opt(expression) ^^ Return
+
+  def throwStatement: Parser[Throw] = "throw" ~> expression ^^ Throw
 
   val arrayInitializer: Parser[ArrayInitializer] =
     ("<" ~> typ <~ ">") ~ ("{" ~> repsep(expression, ",") <~ "}") ^^ ArrayInitializer
@@ -282,7 +284,7 @@ object Parsers {
                       "new", "false", "true", "if", "else", "instanceof",
                       "cast", "private", "try", "catch", "finally", "while",
                       "continue", "break", "switch", "default", "return",
-                      "protected")
+                      "protected", "throw")
   val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "::", ".", ",", "=",
                         "<", ">", "==", "!=", "+", "-", "*")
 }

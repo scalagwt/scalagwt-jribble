@@ -102,6 +102,7 @@ object Shrinkers {
       })
     }
     case x: Return => shrink(x)
+    case x: Throw => shrink(x)
     case x: SuperConstructorCall => shrink(x)
     case x: Expression => shrink(x)
   }
@@ -232,6 +233,10 @@ object Shrinkers {
 
   implicit def shrinkReturn: Shrink[Return] = Shrink {
     case x@Return(expression) => for (v <- shrink(expression)) yield x.copy(expression = v)
+  }
+
+  implicit def shrinkThrow: Shrink[Throw] = Shrink {
+    case x@Throw(expression) => for (v <- shrink(expression)) yield x.copy(expression = v)
   }
 
   implicit def shrinkInstanceOf: Shrink[InstanceOf] = Shrink {
