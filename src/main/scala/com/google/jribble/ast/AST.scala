@@ -141,6 +141,10 @@ case class BinaryOp(symbol: String, lhs: Expression, rhs: Expression) extends Ex
   //assert(List("==", "!=") contains symbol, "Symbol \"%1s\" is illegal".format(symbol))
 }
 
+case class ArrayRef(on: Expression, index: Expression) extends Expression {
+  val precedence = 1
+}
+
 sealed abstract class Type extends AST
 case class Ref(pkg: Option[Package], name: String) extends Type {
   def javaName: String = pkg.map(_.name.replace("/", ".") + ".").getOrElse("") + name

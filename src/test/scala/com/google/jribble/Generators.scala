@@ -105,13 +105,16 @@ object Generators {
     for (s <- symbol; lhs <- expression; rhs <- expression) yield BinaryOp(s, lhs, rhs)
   }
 
+  def arrayRef(implicit depth: ExprDepth): Gen[ArrayRef] =
+    for (on <- expression; index <- expression) yield ArrayRef(on, index)
+
   def expression(implicit depth: ExprDepth): Gen[Expression] = {
     val nonRecursive = Gen.frequency((5, literal), (1, varRef), (1, Gen.value(ThisRef)), (1, staticFieldRef))
     val newDepth = depth.map(_+1)
     val recursive = Gen.oneOf(Gen.lzy(newCall(newDepth)), Gen.lzy(methodCall(newDepth)),
       Gen.lzy(staticMethodCall(newDepth)), Gen.lzy(conditional(newDepth)), Gen.lzy(instanceOf(newDepth)),
       Gen.lzy(cast(newDepth)), Gen.lzy(arrayInitializer(newDepth)), Gen.lzy(fieldRef(newDepth)),
-      Gen.lzy(binaryOp(newDepth)))
+      Gen.lzy(binaryOp(newDepth)), Gen.lzy(arrayRef(newDepth)))
 
     Gen.frequency((3*(depth.x+1), nonRecursive), (1, recursive))
   }
@@ -272,6 +275,7 @@ object Generators {
   implicit val arbArrayInitializer = Arbitrary(arrayInitializer(ExprDepth(0)))
   implicit val arbFieldRef = Arbitrary(fieldRef(ExprDepth(0)))
   implicit val arbStaticFieldRef = Arbitrary(staticFieldRef)
+  implicit val arbArrayRef = Arbitrary(arrayRef(ExprDepth(0)))
   implicit val arbExpression = Arbitrary(expression(ExprDepth(0)))
   implicit val arbVarDef = Arbitrary(varDef)
   implicit val arbAssignment = Arbitrary(assignment)

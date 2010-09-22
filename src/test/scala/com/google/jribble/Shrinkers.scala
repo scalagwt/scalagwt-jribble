@@ -179,6 +179,10 @@ object Shrinkers {
       shrink(x) append
       shrink(lhs) append
       shrink(rhs)
+    case x@ArrayRef(on, index) =>
+      shrink(x) append
+      shrink(on) append
+      shrink(index)
   }
 
   implicit def shrinkMethodCall: Shrink[MethodCall] = Shrink {
@@ -274,6 +278,12 @@ object Shrinkers {
     case x@BinaryOp(_, lhs, rhs) =>
       (for (v <- shrink(lhs)) yield x.copy(lhs = v)) append
       (for (v <- shrink(rhs)) yield x.copy(rhs = v))
+  }
+
+  implicit def shrinkArrayRef: Shrink[ArrayRef] = Shrink {
+    case x@ArrayRef(on, index) =>
+      (for (v <- shrink(on)) yield x.copy(on = v)) append
+      (for (v <- shrink(index)) yield x.copy(index = v))
   }
 
   implicit def shrinkLiteral: Shrink[Literal] = Shrink { x: Literal =>

@@ -78,6 +78,9 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
 
   property("staticFieldRef") = checkPrinterParser(printers.StaticFieldRefPrinter, parsers.staticFieldRef)
 
+  //TODO(grek): See comment above of instanceOf and cast
+//  property("arrayRef") = checkPrinterParser(printers.ArrayRefPrinter, parsers.Expressions.arrayRef)
+
   property("expression") = checkPrinterParser(printers.ExpressionPrinter, parsers.expression)
 
   property("varDef") = checkPrinterParser(printers.VarDefPrinter, parsers.varDef)

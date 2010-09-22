@@ -209,8 +209,9 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
           ("." ~> "<" ~> "instanceof" ~> ">" ~> ("(" ~> ref <~ ")")) ^^ InstanceOf
     lazy val cast: PackratParser[Cast] = expr1 ~ ("." ~> "<" ~> "cast" ~> ">" ~> ("(" ~> ref <~ ")")) ^^ Cast
     lazy val fieldRef: PackratParser[FieldRef] = (expr1 <~ ".") ~ ("(" ~> ref <~ ")") ~ name ^^ FieldRef
+    lazy val arrayRef: PackratParser[ArrayRef] = expr1 ~ ("[" ~> expression <~ "]") ^^ ArrayRef
     lazy val expr1: PackratParser[Expression] =
-      (methodCall | instanceOf | cast | fieldRef | staticCall | staticFieldRef |
+      (methodCall | instanceOf | cast | fieldRef | arrayRef | staticCall | staticFieldRef |
        thisRef | varRef | literal | arrayInitializer | ("(" ~> expr6 <~ ")"))
 
     lazy val expr2 = newCall | expr1
@@ -289,6 +290,6 @@ object Parsers {
                       "cast", "private", "try", "catch", "finally", "while",
                       "continue", "break", "switch", "default", "return",
                       "protected", "throw")
-  val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "::", ".", ",", "=",
+  val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "]", "::", ".", ",", "=",
                         "<", ">", "==", "!=", "+", "-", "*")
 }
