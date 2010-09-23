@@ -86,9 +86,11 @@ case class SuperConstructorCall(signature: Signature, params: List[Expression]) 
   def jparams: JList[Expression] = params
 }
 
-sealed abstract class Expression extends Statement
+sealed abstract class Expression extends Statement {
+  val precedence: Int
+}
 
-sealed abstract class Literal extends Expression
+sealed abstract class Literal extends Expression { val precedence = 1 }
 case class BooleanLiteral(v: Boolean) extends Literal
 case class CharLiteral(v: Char) extends Literal
 case class DoubleLiteral(v: Double) extends Literal
@@ -98,32 +100,44 @@ case class LongLiteral(v: Long) extends Literal
 case object NullLiteral extends Literal
 case class StringLiteral(v: String) extends Literal
 
-case class VarRef(name: String) extends Expression
-case object ThisRef extends Expression
+case class VarRef(name: String) extends Expression { val precedence = 1 }
+case object ThisRef extends Expression { val precedence = 1 }
 
-case class ArrayInitializer(typ: Type, elements: List[Expression]) extends Expression
+case class ArrayInitializer(typ: Type, elements: List[Expression]) extends Expression { val precedence = 1 }
 
 case class Signature(on: Ref, name: String, paramTypes: List[Type], returnType: Type) extends AST {
   def jparamTypes: JList[Type] = paramTypes
 }
 case class NewCall(signature: Signature, params: List[Expression]) extends Expression {
+  val precedence = 2
   def jparams: JList[Expression] = params
 }
 case class MethodCall(on: Expression, signature: Signature, params: List[Expression]) extends Expression {
+  val precedence = 1
   def jparams: JList[Expression] = params
 }
 case class StaticMethodCall(classRef: Ref, signature: Signature, params: List[Expression]) extends Expression {
+  val precedence = 1
   def jparams: JList[Expression] = params
 }
 
-case class Conditional(condition: Expression, typ: Type, then: Expression, elsee: Expression) extends Expression
+case class Conditional(condition: Expression, typ: Type, then: Expression, elsee: Expression) extends Expression {
+  val precedence = 6
+}
 
-case class InstanceOf(on: Expression, typ: Ref) extends Expression
+case class InstanceOf(on: Expression, typ: Ref) extends Expression { val precedence = 1 }
 
-case class Cast(on: Expression, typ: Ref) extends Expression
+case class Cast(on: Expression, typ: Ref) extends Expression { val precedence = 1 }
 
-case class FieldRef(on: Expression, onType: Type, name: String) extends Expression
-case class StaticFieldRef(on: Ref, name: String) extends Expression
+case class FieldRef(on: Expression, onType: Type, name: String) extends Expression { val precedence = 1 }
+case class StaticFieldRef(on: Ref, name: String) extends Expression { val precedence = 1 }
+
+//TODO(grek): Change this class to sealed abstract class and enumarate all possible cases as subclasses
+case class BinaryOp(symbol: String, lhs: Expression, rhs: Expression) extends Expression {
+  //TODO(grek): Putting fake precedence for now because different ops have different precedence
+  val precedence = 3
+  //assert(List("==", "!=") contains symbol, "Symbol \"%1s\" is illegal".format(symbol))
+}
 
 sealed abstract class Type extends AST
 case class Ref(pkg: Option[Package], name: String) extends Type {

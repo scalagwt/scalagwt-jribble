@@ -64,7 +64,7 @@ object PrintersParsersTestCase extends Properties("formatAndParseField") {
 
   //todo (grek): possibly tests for methodCalls and staticMethodCalls?
 
-  property("conditional") = checkPrinterParser(printers.ConditionalPrinter, parsers.conditional)
+  property("conditional") = checkPrinterParser(printers.ConditionalPrinter, parsers.Expressions.conditional)
 
   //TODO(grek): These tests are disabled due to probable bug in PackratParsers, see
   //http://article.gmane.org/gmane.comp.lang.scala.user/31210

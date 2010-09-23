@@ -182,44 +182,70 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
   def returnStatement: Parser[Return] = "return" ~> opt(expression) ^^ Return
 
-  lazy val conditional: PackratParser[Conditional] = "(" ~> (expression <~ "?") ~! ("(" ~> typ <~ ")") ~! expression ~!
-          (":" ~> expression) <~ ")" ^^ Conditional
-
-  lazy val instanceOf: PackratParser[InstanceOf] = expression ~
-          ("." ~> "<" ~> "instanceof" ~> ">" ~> ("(" ~> ref <~ ")")) ^^ InstanceOf
-
-  lazy val cast: PackratParser[Cast] = expression ~ ("." ~> "<" ~> "cast" ~> ">" ~> ("(" ~> ref <~ ")")) ^^ Cast
-
-  lazy val arrayInitializer: PackratParser[ArrayInitializer] =
+  val arrayInitializer: Parser[ArrayInitializer] =
     ("<" ~> typ <~ ">") ~ ("{" ~> repsep(expression, ",") <~ "}") ^^ ArrayInitializer
 
-  lazy val fieldRef: PackratParser[FieldRef] = (expression <~ ".") ~ ("(" ~> ref <~ ")") ~ name ^^ FieldRef
+  val thisRef: Parser[Expression] = "this" ^^^ ThisRef
+  val varRef: Parser[VarRef] = ident ^^ (VarRef)
 
   val staticFieldRef: Parser[StaticFieldRef] = (ref <~ ".") ~ name ^^ StaticFieldRef
+  val staticCall: Parser[StaticMethodCall] = (ref ~ ("." ~> signature) ~! params) ^^ StaticMethodCall
 
-  lazy val expression: PackratParser[Expression] = {
-    val thisRef: Parser[Expression] = "this" ^^^ ThisRef
-    val varRef: Parser[VarRef] = ident ^^ (VarRef)
-    (methodCall | instanceOf | cast | fieldRef | staticFieldRef | arrayInitializer | staticCall | newCall |
-      conditional | literal | thisRef | varRef)
+  val newCall: Parser[NewCall] = ("new" ~> signature ~! params) ^^ NewCall
+
+  /**
+   * Object that groups expressions that are interdependent.
+   *
+   * Parsing of expressions has been broken into several productions named "exprN"
+   * where N-th production contains operators of N-th highest precedence.
+   * In other words: expr1 contains operators with highest precedence, expr2 contains
+   * operators with second highest precedence, etc.
+   */
+  object Expressions {
+    lazy val methodCall: PackratParser[MethodCall] = expr1 ~ ("." ~> signature) ~! params ^^ MethodCall
+    lazy val instanceOf: PackratParser[InstanceOf] = expr1 ~
+          ("." ~> "<" ~> "instanceof" ~> ">" ~> ("(" ~> ref <~ ")")) ^^ InstanceOf
+    lazy val cast: PackratParser[Cast] = expr1 ~ ("." ~> "<" ~> "cast" ~> ">" ~> ("(" ~> ref <~ ")")) ^^ Cast
+    lazy val fieldRef: PackratParser[FieldRef] = (expr1 <~ ".") ~ ("(" ~> ref <~ ")") ~ name ^^ FieldRef
+    lazy val expr1: PackratParser[Expression] =
+      (methodCall | instanceOf | cast | fieldRef | staticCall | staticFieldRef |
+       thisRef | varRef | literal | arrayInitializer | ("(" ~> expr6 <~ ")"))
+
+    lazy val expr2 = newCall | expr1
+    lazy val expr3: PackratParser[Expression] = {
+      lazy val multi: PackratParser[BinaryOp] = expr3 ~ ("*" | "/") ~ expr3 ^^ {
+        case lhs ~ symbol ~ rhs => BinaryOp(symbol, lhs, rhs)
+      }
+      multi | expr2
+    }
+    lazy val expr4: PackratParser[Expression] = {
+      lazy val add: PackratParser[BinaryOp] = expr4 ~ ("-" | "+") ~ expr4 ^^ {
+        case lhs ~ symbol ~ rhs => BinaryOp(symbol, lhs, rhs)
+      }
+      add | expr3
+    }
+    lazy val expr5: PackratParser[Expression] = {
+      lazy val comp = expr4 ~ ("==" | "!=") ~ expr4 ^^ {
+        case lhs ~ symbol ~ rhs => BinaryOp(symbol, lhs, rhs)
+      }
+      comp | expr4
+    }
+
+    lazy val conditional: PackratParser[Conditional] = (expr1 <~ "?") ~! ("(" ~> typ <~ ")") ~! expr1 ~!
+          (":" ~> expr1) ^^ Conditional
+    lazy val expr6: PackratParser[Expression] = conditional | expr5
   }
+
+  lazy val expression: PackratParser[Expression] = Expressions.expr6
 
   lazy val signature: Parser[Signature] = "(" ~> ((ref <~ "::") ~ name) ~!
           ("(" ~> (typ *) <~ ")") ~! returnType <~ ")" ^^ Signature
 
-  lazy val staticCall: PackratParser[StaticMethodCall] = (ref ~ ("." ~> signature) ~! params) ^^ StaticMethodCall
-
-  lazy val methodCall: PackratParser[MethodCall] = expression ~ ("." ~> signature) ~! params ^^ MethodCall
-
-  lazy val newCall: PackratParser[NewCall] = ("new" ~> signature ~! params) ^^ NewCall
-
-  lazy val params: PackratParser[List[Expression]] = {
+  val params: Parser[List[Expression]] = {
     val noParams: Parser[List[Expression]] = "(" ~ ")" ^^^ List()
     val atLeastOneParam: Parser[List[Expression]] = "(" ~> rep1sep(expression, ",") <~ ")"
     noParams | atLeastOneParam
   }
-
-  def varRef = ident
 
   def assignment: Parser[Assignment] = ident ~ ("=" ~> expression) ^^ Assignment
 
@@ -257,5 +283,6 @@ object Parsers {
                       "cast", "private", "try", "catch", "finally", "while",
                       "continue", "break", "switch", "default", "return",
                       "protected")
-  val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "::", ".", ",", "=", "<", ">")
+  val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "::", ".", ",", "=",
+                        "<", ">", "==", "!=", "+", "-", "*")
 }

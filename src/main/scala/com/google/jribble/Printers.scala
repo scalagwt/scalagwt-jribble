@@ -88,7 +88,8 @@ trait Printers {
   }
 
   implicit object MethodCallPrinter extends Printer[MethodCall] {
-    def apply(x: MethodCall) = ExpressionPrinter(x.on) + "." + SignaturePrinter(x.signature) + ParamsPrinter(x.params)
+    def apply(x: MethodCall) =
+      NestedExpressionPrinter(x.precedence, x.on) + "." + SignaturePrinter(x.signature) + ParamsPrinter(x.params)
   }
 
   implicit object StaticMethodCallPrinter extends Printer[StaticMethodCall] {
@@ -97,16 +98,20 @@ trait Printers {
   }
 
   implicit object ConditionalPrinter extends Printer[Conditional] {
-    def apply(x: Conditional) = "(" + ExpressionPrinter(x.condition) + " ?(" + TypePrinter(x.typ) + ") " +
-            ExpressionPrinter(x.then) + " : " + ExpressionPrinter(x.elsee) + ")"
+    def apply(x: Conditional) =
+      NestedExpressionPrinter(0, x.condition) +
+      " ?(" + TypePrinter(x.typ) + ") " +
+      NestedExpressionPrinter(0, x.then) +
+      " : " + NestedExpressionPrinter(0, x.elsee)
   }
 
   implicit object InstanceOfPrinter extends Printer[InstanceOf] {
-    def apply(x: InstanceOf) = ExpressionPrinter(x.on) + "." + "<instanceof>" + "(" + RefPrinter(x.typ) + ")" 
+    def apply(x: InstanceOf) =
+      NestedExpressionPrinter(x.precedence, x.on) + "." + "<instanceof>" + "(" + RefPrinter(x.typ) + ")"
   }
 
   implicit object CastPrinter extends Printer[Cast] {
-    def apply(x: Cast) = ExpressionPrinter(x.on) + "." + "<cast>" + "(" + RefPrinter(x.typ) + ")"
+    def apply(x: Cast) = NestedExpressionPrinter(x.precedence, x.on) + "." + "<cast>" + "(" + RefPrinter(x.typ) + ")"
   }
 
   implicit object ArrayInitializerPrinter extends Printer[ArrayInitializer] {
@@ -115,27 +120,44 @@ trait Printers {
   }
 
   implicit object FieldRefPrinter extends Printer[FieldRef] {
-    def apply(x: FieldRef) = ExpressionPrinter(x.on) + ".(" + TypePrinter(x.onType) + ")" + x.name
+    def apply(x: FieldRef) = NestedExpressionPrinter(x.precedence, x.on) + "." + "(" + TypePrinter(x.onType) + ")" + x.name
   }
 
   implicit object StaticFieldRefPrinter extends Printer[StaticFieldRef] {
     def apply(x: StaticFieldRef) = RefPrinter(x.on) + "." + x.name
   }
 
+  implicit object BinaryOpPrinter extends Printer[BinaryOp] {
+    def apply(x: BinaryOp) =
+      //TODO(grek): Little hack that guarantees paranthesis being printed, this will be removed once we introduce
+      //separate ast nodes for BinaryOperations with proper precedence values set
+      NestedExpressionPrinter(x.precedence-1, x.lhs) + " " + x.symbol + " " + NestedExpressionPrinter(x.precedence-1, x.rhs)
+  }
+
   implicit object ExpressionPrinter extends Printer[Expression] {
-    def apply(x: Expression) = x match {
-      case x: Literal => LiteralPrinter(x)
-      case ThisRef => "this"
-      case x: VarRef => x.name
-      case x: NewCall => NewCallPrinter(x)
-      case x: MethodCall => MethodCallPrinter(x)
-      case x: StaticMethodCall => StaticMethodCallPrinter(x)
-      case x: Conditional => ConditionalPrinter(x)
-      case x: InstanceOf => InstanceOfPrinter(x)
-      case x: Cast => CastPrinter(x)
-      case x: ArrayInitializer => ArrayInitializerPrinter(x)
-      case x: FieldRef => FieldRefPrinter(x)
-      case x: StaticFieldRef => StaticFieldRefPrinter(x)
+    //surrounding for expression which is not nested in another expression have implicit infinite precedence
+    def apply(x: Expression) = NestedExpressionPrinter(10000, x)
+  }
+
+  object NestedExpressionPrinter extends Printer[(Int, Expression)] {
+    def apply(x: (Int, Expression)) = {
+      val (surroundingPrecedence, nested) = x
+      val printed = nested match {
+        case x: Literal => LiteralPrinter(x)
+        case ThisRef => "this"
+        case x: VarRef => x.name
+        case x: NewCall => NewCallPrinter(x)
+        case x: MethodCall => MethodCallPrinter(x)
+        case x: StaticMethodCall => StaticMethodCallPrinter(x)
+        case x: Conditional => ConditionalPrinter(x)
+        case x: InstanceOf => InstanceOfPrinter(x)
+        case x: Cast => CastPrinter(x)
+        case x: ArrayInitializer => ArrayInitializerPrinter(x)
+        case x: FieldRef => FieldRefPrinter(x)
+        case x: StaticFieldRef => StaticFieldRefPrinter(x)
+        case x: BinaryOp => BinaryOpPrinter(x)
+      }
+      if (surroundingPrecedence < nested.precedence) "(" + printed + ")" else printed
     }
   }
 

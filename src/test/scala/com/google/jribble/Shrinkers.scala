@@ -174,6 +174,10 @@ object Shrinkers {
       shrink(x) append
       shrink(on)
     case x: StaticFieldRef => shrink(x)
+    case x@BinaryOp(_, lhs, rhs) =>
+      shrink(x) append
+      shrink(lhs) append
+      shrink(rhs)
   }
 
   implicit def shrinkMethodCall: Shrink[MethodCall] = Shrink {
@@ -259,6 +263,12 @@ object Shrinkers {
     case x@StaticFieldRef(on, name) =>
       (for (v <- shrink(on)) yield x.copy(on = v)) append
       (for (v <- shrinkName.shrink(name)) yield x.copy(name = v))
+  }
+
+  implicit def shrinkBinaryOp: Shrink[BinaryOp] = Shrink {
+    case x@BinaryOp(_, lhs, rhs) =>
+      (for (v <- shrink(lhs)) yield x.copy(lhs = v)) append
+      (for (v <- shrink(rhs)) yield x.copy(rhs = v))
   }
 
   implicit def shrinkLiteral: Shrink[Literal] = Shrink { x: Literal =>
