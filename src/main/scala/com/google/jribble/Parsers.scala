@@ -208,7 +208,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     lazy val arrayRef: PackratParser[ArrayRef] = expr1 ~ ("[" ~> expression <~ "]") ^^ ArrayRef
     lazy val expr1: PackratParser[Expression] =
       (methodCall | instanceOf | cast | fieldRef | arrayRef | staticCall | staticFieldRef |
-       thisRef | varRef | literal | arrayInitializer | ("(" ~> expr6 <~ ")"))
+       thisRef | varRef | literal | arrayInitializer | ("(" ~> expr8 <~ ")"))
 
     lazy val expr2 = newCall | expr1
     lazy val expr3: PackratParser[Expression] = {
@@ -229,13 +229,25 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
       }
       comp | expr4
     }
+    lazy val expr6: PackratParser[Expression] = {
+      lazy val and = expr6 ~ "&&" ~ expr6 ^^ {
+        case lhs ~ symbol ~ rhs => BinaryOp(symbol, lhs, rhs)
+      }
+      and | expr5
+    }
+    lazy val expr7: PackratParser[Expression] = {
+      lazy val or = expr7 ~ "||" ~ expr7 ^^ {
+        case lhs ~ symbol ~ rhs => BinaryOp(symbol, lhs, rhs)
+      }
+      or | expr6
+    }
 
     lazy val conditional: PackratParser[Conditional] = (expr1 <~ "?") ~! ("(" ~> typ <~ ")") ~! expr1 ~!
           (":" ~> expr1) ^^ Conditional
-    lazy val expr6: PackratParser[Expression] = conditional | expr5
+    lazy val expr8: PackratParser[Expression] = conditional | expr7
   }
 
-  lazy val expression: PackratParser[Expression] = Expressions.expr6
+  lazy val expression: PackratParser[Expression] = Expressions.expr8
 
   val methodSignature = signature(name)
 
@@ -289,5 +301,5 @@ object Parsers {
                       "continue", "break", "switch", "default", "return",
                       "protected", "throw")
   val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "]", "::", ".", ",", "=",
-                        "<", ">", "==", "!=", "+", "-", "*")
+                        "<", ">", "==", "!=", "+", "-", "*", "&&", "||")
 }
