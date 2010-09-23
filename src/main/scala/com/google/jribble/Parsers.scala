@@ -212,33 +212,26 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
     lazy val expr2 = newCall | expr1
     lazy val expr3: PackratParser[Expression] = {
-      lazy val multi: PackratParser[BinaryOp] = expr3 ~ ("*" | "/") ~ expr3 ^^ {
-        case lhs ~ symbol ~ rhs => BinaryOp(symbol, lhs, rhs)
-      }
-      multi | expr2
+      lazy val multi: PackratParser[Multiply] = (expr3 <~ "*") ~ expr3 ^^ Multiply
+      lazy val div: PackratParser[Divide] = (expr3 <~ "/") ~ expr3 ^^ Divide
+      multi | div | expr2
     }
     lazy val expr4: PackratParser[Expression] = {
-      lazy val add: PackratParser[BinaryOp] = expr4 ~ ("-" | "+") ~ expr4 ^^ {
-        case lhs ~ symbol ~ rhs => BinaryOp(symbol, lhs, rhs)
-      }
-      add | expr3
+      lazy val plus: PackratParser[Plus] = (expr4 <~ "+") ~ expr4 ^^ Plus
+      lazy val minus: PackratParser[Minus] = (expr4 <~ "-") ~ expr4 ^^ Minus
+      plus | minus | expr3
     }
     lazy val expr5: PackratParser[Expression] = {
-      lazy val comp = expr4 ~ ("==" | "!=") ~ expr4 ^^ {
-        case lhs ~ symbol ~ rhs => BinaryOp(symbol, lhs, rhs)
-      }
-      comp | expr4
+      lazy val equal: PackratParser[Equal] = (expr5 <~ "==") ~ expr5 ^^ Equal
+      lazy val notEqual: PackratParser[NotEqual] = (expr5 <~ "!=") ~ expr5 ^^ NotEqual
+      equal | notEqual | expr4
     }
     lazy val expr6: PackratParser[Expression] = {
-      lazy val and = expr6 ~ "&&" ~ expr6 ^^ {
-        case lhs ~ symbol ~ rhs => BinaryOp(symbol, lhs, rhs)
-      }
+      lazy val and: PackratParser[And] = (expr6 <~ "&&") ~ expr6 ^^ And
       and | expr5
     }
     lazy val expr7: PackratParser[Expression] = {
-      lazy val or = expr7 ~ "||" ~ expr7 ^^ {
-        case lhs ~ symbol ~ rhs => BinaryOp(symbol, lhs, rhs)
-      }
+      lazy val or: PackratParser[Or] = (expr7 <~ "||") ~ expr7 ^^ Or
       or | expr6
     }
 

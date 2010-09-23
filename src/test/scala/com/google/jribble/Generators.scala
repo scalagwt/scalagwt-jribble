@@ -104,8 +104,8 @@ object Generators {
   def staticFieldRef: Gen[StaticFieldRef] = for (on <- ref; n <- identifier) yield StaticFieldRef(on, n)
 
   def binaryOp(implicit depth: ExprDepth): Gen[BinaryOp] = {
-    val symbol = Gen.oneOf("==", "!=")
-    for (s <- symbol; lhs <- expression; rhs <- expression) yield BinaryOp(s, lhs, rhs)
+    val op = Gen.oneOf[(Expression, Expression) => BinaryOp](Multiply, Divide, Minus, Plus, Equal, NotEqual, And, Or)
+    for (o <- op; lhs <- expression; rhs <- expression) yield o(lhs, rhs)
   }
 
   def arrayRef(implicit depth: ExprDepth): Gen[ArrayRef] =

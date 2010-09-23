@@ -173,10 +173,10 @@ object Shrinkers {
       shrink(x) append
       shrink(on)
     case x: StaticFieldRef => shrink(x)
-    case x@BinaryOp(_, lhs, rhs) =>
+    case x: BinaryOp =>
       shrink(x) append
-      shrink(lhs) append
-      shrink(rhs)
+      shrink(x.lhs) append
+      shrink(x.rhs)
     case x@ArrayRef(on, index) =>
       shrink(x) append
       shrink(on) append
@@ -272,10 +272,20 @@ object Shrinkers {
       (for (v <- shrinkName.shrink(name)) yield x.copy(name = v))
   }
 
-  implicit def shrinkBinaryOp: Shrink[BinaryOp] = Shrink {
-    case x@BinaryOp(_, lhs, rhs) =>
-      (for (v <- shrink(lhs)) yield x.copy(lhs = v)) append
-      (for (v <- shrink(rhs)) yield x.copy(rhs = v))
+  implicit def shrinkBinaryOp: Shrink[BinaryOp] = Shrink { x: BinaryOp =>
+    //TODO(grek): Figure out how this can be avoided
+    def copy(lhs: Expression = x.lhs, rhs: Expression = x.rhs) = x match {
+      case x: Multiply => x.copy(lhs = lhs, rhs = rhs)
+      case x: Divide => x.copy(lhs = lhs, rhs = rhs)
+      case x: Plus => x.copy(lhs = lhs, rhs = rhs)
+      case x: Minus => x.copy(lhs = lhs, rhs = rhs)
+      case x: Equal => x.copy(lhs = lhs, rhs = rhs)
+      case x: NotEqual => x.copy(lhs = lhs, rhs = rhs)
+      case x: And => x.copy(lhs = lhs, rhs = rhs)
+      case x: Or => x.copy(lhs = lhs, rhs = rhs)
+    }
+    (for (v <- shrink(x.lhs)) yield copy(lhs = v)) append
+    (for (v <- shrink(x.rhs)) yield copy(rhs = v))
   }
 
   implicit def shrinkArrayRef: Shrink[ArrayRef] = Shrink {

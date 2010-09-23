@@ -129,9 +129,7 @@ trait Printers {
 
   implicit object BinaryOpPrinter extends Printer[BinaryOp] {
     def apply(x: BinaryOp) =
-      //TODO(grek): Little hack that guarantees paranthesis being printed, this will be removed once we introduce
-      //separate ast nodes for BinaryOperations with proper precedence values set
-      NestedExpressionPrinter(x.precedence-1, x.lhs) + " " + x.symbol + " " + NestedExpressionPrinter(x.precedence-1, x.rhs)
+      NestedExpressionPrinter(x.precedence, x.lhs) + " " + x.symbol + " " + NestedExpressionPrinter(x.precedence, x.rhs)
   }
 
   implicit object ArrayRefPrinter extends Printer[ArrayRef] {

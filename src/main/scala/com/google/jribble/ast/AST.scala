@@ -134,12 +134,18 @@ case class Cast(on: Expression, typ: Type) extends Expression { val precedence =
 case class FieldRef(on: Expression, onType: Type, name: String) extends Expression { val precedence = 1 }
 case class StaticFieldRef(on: Ref, name: String) extends Expression { val precedence = 1 }
 
-//TODO(grek): Change this class to sealed abstract class and enumarate all possible cases as subclasses
-case class BinaryOp(symbol: String, lhs: Expression, rhs: Expression) extends Expression {
-  //TODO(grek): Putting fake precedence for now because different ops have different precedence
-  val precedence = 3
-  //assert(List("==", "!=") contains symbol, "Symbol \"%1s\" is illegal".format(symbol))
+sealed abstract class BinaryOp(val symbol: String) extends Expression {
+  val lhs: Expression
+  val rhs: Expression
 }
+case class Multiply(lhs: Expression, rhs: Expression) extends BinaryOp("*") { val precedence = 3 }
+case class Divide(lhs: Expression, rhs: Expression) extends BinaryOp("/") { val precedence = 3 }
+case class Minus(lhs: Expression, rhs: Expression) extends BinaryOp("-") { val precedence = 4 }
+case class Plus(lhs: Expression, rhs: Expression) extends BinaryOp("+") { val precedence = 4 }
+case class Equal(lhs: Expression, rhs: Expression) extends BinaryOp("==") { val precedence = 6 }
+case class NotEqual(lhs: Expression, rhs: Expression) extends BinaryOp("!=") { val precedence = 6 }
+case class And(lhs: Expression, rhs: Expression) extends BinaryOp("&&") { val precedence = 7 }
+case class Or(lhs: Expression, rhs: Expression) extends BinaryOp("||") { val precedence = 8 }
 
 case class ArrayRef(on: Expression, index: Expression) extends Expression {
   val precedence = 1
