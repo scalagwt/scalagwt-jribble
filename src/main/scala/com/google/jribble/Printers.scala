@@ -139,6 +139,11 @@ trait Printers {
     def apply(x: ArrayRef) = NestedExpressionPrinter(x.precedence, x.on) + "[" + ExpressionPrinter(x.index) + "]"
   }
 
+  implicit object NewArrayPrinter extends Printer[NewArray] {
+    def apply(x: NewArray) = "new " + TypePrinter(x.typ) +
+      x.dims.map("[" + _.map(ExpressionPrinter).getOrElse("") + "]").mkString("")
+  }
+
   implicit object ExpressionPrinter extends Printer[Expression] {
     //surrounding for expression which is not nested in another expression have implicit infinite precedence
     def apply(x: Expression) = NestedExpressionPrinter(10000, x)
@@ -162,6 +167,7 @@ trait Printers {
         case x: StaticFieldRef => StaticFieldRefPrinter(x)
         case x: BinaryOp => BinaryOpPrinter(x)
         case x: ArrayRef => ArrayRefPrinter(x)
+        case x: NewArray => NewArrayPrinter(x)
       }
       if (surroundingPrecedence < nested.precedence) "(" + printed + ")" else printed
     }

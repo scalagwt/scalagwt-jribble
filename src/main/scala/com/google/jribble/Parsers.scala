@@ -191,6 +191,8 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
   val newCall: Parser[NewCall] = ("new" ~> constructorCall("this")) ^^ NewCall
 
+  val newRef: Parser[NewArray] = ("new" ~> (primitive | ref)) ~ rep1("[" ~> opt(expression) <~ "]") ^^ NewArray
+
   /**
    * Object that groups expressions that are interdependent.
    *
@@ -210,7 +212,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
       (methodCall | instanceOf | cast | fieldRef | arrayRef | staticCall | staticFieldRef |
        thisRef | varRef | literal | arrayInitializer | ("(" ~> expr9 <~ ")"))
 
-    lazy val expr2 = newCall | expr1
+    lazy val expr2 = newCall | newRef | expr1
 
     /**
      * Takes a list of left-associative operators and turns them into alternative and

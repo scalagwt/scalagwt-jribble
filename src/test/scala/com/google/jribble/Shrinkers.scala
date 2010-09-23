@@ -184,6 +184,9 @@ object Shrinkers {
       shrink(x) append
       shrink(on) append
       shrink(index)
+    case x@NewArray(_, dims) =>
+      shrink(x) append
+      dims.flatten.map(shrink(_)).foldLeft(Stream.empty[Expression])(interleave)
   }
 
   implicit def shrinkMethodCall: Shrink[MethodCall] = Shrink {
@@ -299,6 +302,12 @@ object Shrinkers {
     case x@ArrayRef(on, index) =>
       (for (v <- shrink(on)) yield x.copy(on = v)) append
       (for (v <- shrink(index)) yield x.copy(index = v))
+  }
+
+  implicit def shrinkNewArray: Shrink[NewArray] = Shrink {
+    case x@NewArray(typ, dims) =>
+      (for (v <- shrink(typ)) yield x.copy(typ = v)) append
+      (for (v <- shrink(dims) if !v.isEmpty) yield x.copy(dims = v))
   }
 
   implicit def shrinkLiteral: Shrink[Literal] = Shrink { x: Literal =>

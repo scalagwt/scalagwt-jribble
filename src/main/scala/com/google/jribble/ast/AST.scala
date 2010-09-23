@@ -156,6 +156,12 @@ case class ArrayRef(on: Expression, index: Expression) extends Expression {
   val precedence = 1
 }
 
+case class NewArray(typ: Type, dims: List[Option[Expression]]) extends Expression {
+  assert(!dims.isEmpty)
+  val precedence = 2
+  def jdims: JList[Option[Expression]] = dims
+}
+
 sealed abstract class Type extends AST
 case class Ref(pkg: Option[Package], name: String) extends Type {
   def javaName: String = pkg.map(_.name.replace("/", ".") + ".").getOrElse("") + name
