@@ -187,7 +187,7 @@ object Generators {
       (1, throwStatement))
     val newDepth = depth.map(_+1)
     val recursive = Gen.oneOf(Gen.lzy(ifStatement(newDepth)), Gen.lzy(tryStatement(newDepth)),
-      Gen.lzy(whileStatement(newDepth)), Gen.lzy(switchStatement(newDepth)))
+      Gen.lzy(whileStatement(newDepth)), Gen.lzy(switchStatement(newDepth)), Gen.lzy(block(newDepth)))
     Gen.frequency((3*(depth.x+1), nonRecursive), (1, recursive))
   }
   def methodStatements(implicit depth: StmtDepth): Gen[List[Statement]] =

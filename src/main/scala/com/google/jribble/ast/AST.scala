@@ -58,11 +58,12 @@ case class MethodDef(modifs: Set[String], returnType: Type, name: String, params
 
 case class FieldDef(modifs: Set[String], typ: Type, name: String, value: Option[Expression]) extends ClassBodyElement
 
-case class Block(statements: List[Statement]) {
+sealed abstract class Statement extends AST
+
+case class Block(statements: List[Statement]) extends Statement {
   def jstatements: JList[Statement] = statements
 }
 
-sealed abstract class Statement extends AST
 case class VarDef(typ: Type, name: String, value: Option[Expression]) extends Statement
 case class Assignment(lhs: Expression, rhs: Expression) extends Statement
 //TODO(grek): by using Block[MethodStatement] we are making it impossible to call super constructors from

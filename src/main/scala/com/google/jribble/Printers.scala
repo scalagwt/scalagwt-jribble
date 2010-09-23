@@ -230,6 +230,7 @@ trait Printers {
       case x: Switch => SwitchPrinter(x)
       case x: Return => ReturnPrinter(x) + ";"
       case x: Throw => ThrowPrinter(x) + ";"
+      case x: Block => BlockPrinter(x)
     }
   }
 

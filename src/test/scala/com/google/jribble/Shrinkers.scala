@@ -105,6 +105,9 @@ object Shrinkers {
     case x: Throw => shrink(x)
     case x: ConstructorCall => shrink(x)
     case x: Expression => shrink(x)
+    case x@Block(statements) =>
+      shrink(x) append
+      statements.map(shrink(_)).foldLeft(Stream.empty[Statement])(interleave)
   }
 
   implicit def shrinkVarDef: Shrink[VarDef] = Shrink {

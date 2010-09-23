@@ -143,7 +143,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
   def varDef: Parser[VarDef] = typ ~ ident ~ opt("=" ~> expression) ^^ VarDef
 
   def methodStatement: Parser[Statement] =
-    ifStatement | tryStatement | whileStatement | switchStatement |
+    ifStatement | tryStatement | whileStatement | switchStatement | block |
     ((continueStatement | breakStatement | returnStatement | throwStatement | varDef | assignment | expression) <~ ";")
 
   def ifStatement: Parser[If] =
