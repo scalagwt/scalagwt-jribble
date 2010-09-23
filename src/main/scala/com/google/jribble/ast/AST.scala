@@ -51,7 +51,7 @@ case class Constructor(name: String, params: List[ParamDef], body: Block) extend
   def signature(enclosing: Ref) = Signature(enclosing, enclosing.name, params.map(_.typ), Void)
 }
 case class MethodDef(modifs: Set[String], returnType: Type, name: String, params: List[ParamDef],
-                     body: Block) extends ClassBodyElement with InterfaceBodyElement {
+                     body: Option[Block]) extends ClassBodyElement with InterfaceBodyElement {
   def jparams: JList[ParamDef] = params
   def signature(enclosing: Ref) = Signature(enclosing, name, params.map(_.typ), returnType)
 }

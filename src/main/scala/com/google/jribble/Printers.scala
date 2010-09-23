@@ -243,8 +243,8 @@ trait Printers {
 
   implicit object MethodDefPrinter extends Printer[MethodDef] {
     def apply(x: MethodDef) =
-      x.modifs.map(_ + " ").mkString + TypePrinter(x.returnType) + " " + x.name + ParamsDefPrinter(x.params) + " " +
-              BlockPrinter(x.body) + "\n" 
+      x.modifs.map(_ + " ").mkString + TypePrinter(x.returnType) + " " + x.name + ParamsDefPrinter(x.params) +
+              x.body.map(b => " " + BlockPrinter(b) + "\n").getOrElse(";") 
   }
 
   implicit object FieldDefPrinter extends Printer[FieldDef] {

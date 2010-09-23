@@ -78,7 +78,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
   def interfaceBody: Parser[List[MethodDef]] = {
     val methodDef = this.methodDef into {
-      case x : MethodDef if x.body.statements.isEmpty => success(x)
+      case x : MethodDef if x.body.map(_.statements.isEmpty) getOrElse true => success(x)
       case x => failure("Method definition should have an empty body.")
     }
     "{" ~> rep(methodDef) <~ "}"
@@ -126,7 +126,8 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     modifs(allowed).map(_.toSet)
   }
 
-  def methodDef: Parser[MethodDef] = (methodModifs ~ returnType ~ name ~ paramsDef) ~! methodBody ^^ MethodDef
+  def methodDef: Parser[MethodDef] =
+    (methodModifs ~ returnType ~ name ~ paramsDef) ~! (";" ^^^ None | methodBody ^^ (Some(_))) ^^ MethodDef
 
   val fieldModifs: Parser[Set[String]] = {
     val allowed = Set("public", "final", "static", "private", "protected")

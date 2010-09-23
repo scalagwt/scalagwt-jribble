@@ -211,9 +211,13 @@ object Generators {
     val modif = Gen.oneOf("public", "final", "static", "private", "protected", "abstract")
     Gen.resize(3, Gen.listOf(modif)).map(_.toSet)
   }
-  def methodDef: Gen[MethodDef] =
-    for (m <- methodModifiers; t <- returnType; n <- identifier; p <- paramsDef; b <- methodBody) yield
-      MethodDef(m, t, n, p, b)
+  def methodDef: Gen[MethodDef] = for {
+    m <- methodModifiers
+    t <- returnType
+    n <- identifier
+    p <- paramsDef
+    b <- Arbitrary.arbOption(Arbitrary(methodBody)).arbitrary
+  } yield MethodDef(m, t, n, p, b)
 
   def fieldDef: Gen[FieldDef] = {
     def modifiers: Gen[Set[String]] = {
@@ -240,9 +244,10 @@ object Generators {
     fs <- Gen.resize(3, Gen.listOf(fieldDef))
   } yield cs ++ ms ++ fs
 
-  def interfaceBody: Gen[List[MethodDef]] = for {
-    ms <- Gen.resize(5, Gen.listOf(methodDef.filter(_.body.statements.isEmpty)))
-  } yield ms
+  def interfaceBody: Gen[List[MethodDef]] = {
+    val emptyMethodDef = methodDef.filter(_.body.map(_.statements.isEmpty) getOrElse false)
+    for (ms <- Gen.resize(5, Gen.listOf(emptyMethodDef))) yield ms
+  }
 
   def classDef: Gen[ClassDef] = for {
     m <- classModifiers
