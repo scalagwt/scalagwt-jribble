@@ -129,7 +129,7 @@ case class Conditional(condition: Expression, typ: Type, then: Expression, elsee
 
 case class InstanceOf(on: Expression, typ: Ref) extends Expression { val precedence = 1 }
 
-case class Cast(on: Expression, typ: Ref) extends Expression { val precedence = 1 }
+case class Cast(on: Expression, typ: Type) extends Expression { val precedence = 1 }
 
 case class FieldRef(on: Expression, onType: Type, name: String) extends Expression { val precedence = 1 }
 case class StaticFieldRef(on: Ref, name: String) extends Expression { val precedence = 1 }

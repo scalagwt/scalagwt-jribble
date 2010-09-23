@@ -203,7 +203,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     lazy val methodCall: PackratParser[MethodCall] = expr1 ~ ("." ~> methodSignature) ~! params ^^ MethodCall
     lazy val instanceOf: PackratParser[InstanceOf] = expr1 ~
           ("." ~> "<" ~> "instanceof" ~> ">" ~> ("(" ~> ref <~ ")")) ^^ InstanceOf
-    lazy val cast: PackratParser[Cast] = expr1 ~ ("." ~> "<" ~> "cast" ~> ">" ~> ("(" ~> ref <~ ")")) ^^ Cast
+    lazy val cast: PackratParser[Cast] = expr1 ~ ("." ~> "<" ~> "cast" ~> ">" ~> ("(" ~> typ <~ ")")) ^^ Cast
     lazy val fieldRef: PackratParser[FieldRef] = (expr1 <~ ".") ~ ("(" ~> ref <~ ")") ~ name ^^ FieldRef
     lazy val arrayRef: PackratParser[ArrayRef] = expr1 ~ ("[" ~> expression <~ "]") ^^ ArrayRef
     lazy val expr1: PackratParser[Expression] =

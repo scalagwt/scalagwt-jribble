@@ -111,7 +111,7 @@ trait Printers {
   }
 
   implicit object CastPrinter extends Printer[Cast] {
-    def apply(x: Cast) = NestedExpressionPrinter(x.precedence, x.on) + "." + "<cast>" + "(" + RefPrinter(x.typ) + ")"
+    def apply(x: Cast) = NestedExpressionPrinter(x.precedence, x.on) + "." + "<cast>" + "(" + TypePrinter(x.typ) + ")"
   }
 
   implicit object ArrayInitializerPrinter extends Printer[ArrayInitializer] {

@@ -93,7 +93,7 @@ object Generators {
   def instanceOf(implicit depth: ExprDepth): Gen[InstanceOf] =
     for (on <- expression; t <- ref) yield InstanceOf(on, t)
 
-  def cast(implicit depth: ExprDepth): Gen[Cast] = for (on <- expression; t <- ref) yield Cast(on, t)
+  def cast(implicit depth: ExprDepth): Gen[Cast] = for (on <- expression; t <- typ) yield Cast(on, t)
 
   def arrayInitializer(implicit depth: ExprDepth): Gen[ArrayInitializer] =
     for (t <- typ; elements <- Gen.resize(3,Gen.listOf(expression))) yield ArrayInitializer(t, elements)
