@@ -50,13 +50,16 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     modifs(allowed).map(_.toSet)
   }
 
-  val classDef: Parser[ClassDef] = ((classModifs <~ "class") ~! ref ~! opt(extendsDef) ~!
-          opt(implementsDef) ~! classBody) ^^ {
-      case modifs ~ classRef ~ ext ~ impl ~ body => ClassDef(modifs, classRef, ext, impl.getOrElse(Nil), body)
-    }
+  val classDef: Parser[ClassDef] = {
+    def extendsDef: Parser[Ref] = "extends" ~> ref
+    def optImplementsDef: Parser[List[Ref]] = opt("implements" ~> rep1sep(ref, ",")) ^^ (_ getOrElse Nil)
+    (classModifs <~ "class") ~! ref ~! opt(extendsDef) ~! optImplementsDef ~! classBody ^^ ClassDef
+  }
 
-  val interfaceDef: Parser[InterfaceDef] = ((interfaceModifs <~ "interface") ~! ref ~!
-            opt(extendsDef) ~! interfaceBody) ^^ InterfaceDef
+  val interfaceDef: Parser[InterfaceDef] = {
+    def optExtendsDef: Parser[List[Ref]] = opt("extends" ~> rep1sep(ref, ",")) ^^ (_ getOrElse Nil)
+    (interfaceModifs <~ "interface") ~! ref ~! optExtendsDef ~! interfaceBody ^^ InterfaceDef
+  }
 
   def name: Parser[String] = accept("identifier", { case Identifier(x) => x})
 
@@ -70,10 +73,6 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     }
     Ref(pkg, xs.last)
   }
-
-  def extendsDef: Parser[Ref] = "extends" ~> ref
-
-  def implementsDef: Parser[List[Ref]] = "implements" ~> rep1sep(ref, ",")
 
   def classBody: Parser[List[ClassBodyElement]] = "{" ~> rep(constructor | methodDef | fieldDef) <~ "}"
 

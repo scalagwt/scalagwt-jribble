@@ -39,8 +39,9 @@ case class ClassDef(modifs: Set[String], name: Ref, ext: Option[Ref], implements
   def jimplements: JList[Ref] = implements
 }
 
-case class InterfaceDef(modifs: Set[String], name: Ref, ext: Option[Ref], body: List[MethodDef]) extends DeclaredType {
+case class InterfaceDef(modifs: Set[String], name: Ref, ext: List[Ref], body: List[MethodDef]) extends DeclaredType {
   def jbody: JList[MethodDef] = body
+  def jext: JList[Ref] = ext
 }
 
 case class ParamDef(name: String, typ: Type) extends AST

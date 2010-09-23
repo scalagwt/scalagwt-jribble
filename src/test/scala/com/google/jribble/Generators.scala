@@ -234,10 +234,6 @@ object Generators {
     Gen.resize(2, Gen.listOf(modif)).map(_.toSet)
   }
 
-  def extendsDef: Gen[Option[Ref]] = Arbitrary.arbitrary[Option[Ref]]
-
-  def implementsDef: Gen[List[Ref]] = Gen.resize(3, Gen.listOf(ref))
-
   def classBody: Gen[List[ClassBodyElement]] = for {
     cs <- Gen.resize(3, Gen.listOf(constructor))
     ms <- Gen.resize(5, Gen.listOf(methodDef))
@@ -251,15 +247,15 @@ object Generators {
   def classDef: Gen[ClassDef] = for {
     m <- classModifiers
     n <- ref
-    e <- extendsDef
-    i <- implementsDef
+    e <- Arbitrary.arbitrary[Option[Ref]]
+    i <- Gen.resize(3, Gen.listOf(ref))
     b <- classBody
   } yield ClassDef(m, n, e, i, b)
 
   def interfaceDef: Gen[InterfaceDef] = for {
     m <- interfaceModifiers
     n <- ref
-    e <- extendsDef
+    e <- Gen.resize(3, Gen.listOf(ref))
     b <- interfaceBody
   } yield InterfaceDef(m, n, e, b)
 
