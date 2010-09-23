@@ -91,6 +91,11 @@ case class ConstructorCall(signature: Signature, params: List[Expression]) exten
 }
 
 sealed abstract class Expression extends Statement {
+  /**
+   * Precedence for every AST node is assigned according to
+   * Introduction to Programming in Java by Robert Sedgewick and Kevin Wayne,
+   * Appendix A: Operator Precedence in Java
+   */
   val precedence: Int
 }
 
@@ -113,7 +118,7 @@ case class Signature(on: Ref, name: String, paramTypes: List[Type], returnType: 
   def jparamTypes: JList[Type] = paramTypes
 }
 case class NewCall(constructor: ConstructorCall) extends Expression {
-  val precedence = 2
+  val precedence = 3
 }
 case class MethodCall(on: Expression, signature: Signature, params: List[Expression]) extends Expression {
   val precedence = 1
@@ -125,7 +130,7 @@ case class StaticMethodCall(classRef: Ref, signature: Signature, params: List[Ex
 }
 
 case class Conditional(condition: Expression, typ: Type, then: Expression, elsee: Expression) extends Expression {
-  val precedence = 9
+  val precedence = 14
 }
 
 case class InstanceOf(on: Expression, typ: Ref) extends Expression { val precedence = 1 }
@@ -139,18 +144,18 @@ sealed abstract class BinaryOp(val symbol: String) extends Expression {
   val lhs: Expression
   val rhs: Expression
 }
-case class Multiply(lhs: Expression, rhs: Expression) extends BinaryOp("*") { val precedence = 3 }
-case class Divide(lhs: Expression, rhs: Expression) extends BinaryOp("/") { val precedence = 3 }
-case class Minus(lhs: Expression, rhs: Expression) extends BinaryOp("-") { val precedence = 4 }
-case class Plus(lhs: Expression, rhs: Expression) extends BinaryOp("+") { val precedence = 4 }
-case class Greater(lhs: Expression, rhs: Expression) extends BinaryOp(">") { val precedence = 5 }
-case class GreaterOrEqual(lhs: Expression, rhs: Expression) extends BinaryOp(">=") { val precedence = 5 }
-case class Lesser(lhs: Expression, rhs: Expression) extends BinaryOp("<") { val precedence = 5 }
-case class LesserOrEqual(lhs: Expression, rhs: Expression) extends BinaryOp("<=") { val precedence = 5 }
-case class Equal(lhs: Expression, rhs: Expression) extends BinaryOp("==") { val precedence = 6 }
-case class NotEqual(lhs: Expression, rhs: Expression) extends BinaryOp("!=") { val precedence = 6 }
-case class And(lhs: Expression, rhs: Expression) extends BinaryOp("&&") { val precedence = 7 }
-case class Or(lhs: Expression, rhs: Expression) extends BinaryOp("||") { val precedence = 8 }
+case class Multiply(lhs: Expression, rhs: Expression) extends BinaryOp("*") { val precedence = 4 }
+case class Divide(lhs: Expression, rhs: Expression) extends BinaryOp("/") { val precedence = 4 }
+case class Minus(lhs: Expression, rhs: Expression) extends BinaryOp("-") { val precedence = 5 }
+case class Plus(lhs: Expression, rhs: Expression) extends BinaryOp("+") { val precedence = 5 }
+case class Greater(lhs: Expression, rhs: Expression) extends BinaryOp(">") { val precedence = 7 }
+case class GreaterOrEqual(lhs: Expression, rhs: Expression) extends BinaryOp(">=") { val precedence = 7 }
+case class Lesser(lhs: Expression, rhs: Expression) extends BinaryOp("<") { val precedence = 7 }
+case class LesserOrEqual(lhs: Expression, rhs: Expression) extends BinaryOp("<=") { val precedence = 7 }
+case class Equal(lhs: Expression, rhs: Expression) extends BinaryOp("==") { val precedence = 8 }
+case class NotEqual(lhs: Expression, rhs: Expression) extends BinaryOp("!=") { val precedence = 8 }
+case class And(lhs: Expression, rhs: Expression) extends BinaryOp("&&") { val precedence = 12 }
+case class Or(lhs: Expression, rhs: Expression) extends BinaryOp("||") { val precedence = 13 }
 
 case class ArrayRef(on: Expression, index: Expression) extends Expression {
   val precedence = 1
@@ -158,7 +163,7 @@ case class ArrayRef(on: Expression, index: Expression) extends Expression {
 
 case class NewArray(typ: Type, dims: List[Option[Expression]]) extends Expression {
   assert(!dims.isEmpty)
-  val precedence = 2
+  val precedence = 3
   def jdims: JList[Option[Expression]] = dims
 }
 

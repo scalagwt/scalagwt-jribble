@@ -210,9 +210,9 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     lazy val arrayRef: PackratParser[ArrayRef] = expr1 ~ ("[" ~> expression <~ "]") ^^ ArrayRef
     lazy val expr1: PackratParser[Expression] =
       (methodCall | instanceOf | cast | fieldRef | arrayRef | staticCall | staticFieldRef |
-       thisRef | varRef | literal | arrayInitializer | ("(" ~> expr9 <~ ")"))
+       thisRef | varRef | literal | arrayInitializer | ("(" ~> expr15 <~ ")"))
 
-    lazy val expr2 = newCall | newRef | expr1
+    lazy val expr3 = newCall | newRef | expr1
 
     /**
      * Takes a list of left-associative operators and turns them into alternative and
@@ -226,20 +226,21 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
       val opsAlternative = opsParsers.reduceLeft[PackratParser[BinaryOp]] { case (ps, p ) => ps | p }
       opsAlternative | higherPrec
     }
-    lazy val expr3: PackratParser[Expression] = leftBinaryOps(expr3, expr2)("*" -> Multiply, "/" -> Divide)
-    lazy val expr4: PackratParser[Expression] = leftBinaryOps(expr4, expr3)("+" -> Plus, "-" -> Minus)
-    lazy val expr5: PackratParser[Expression] = leftBinaryOps(expr5, expr4)(
+    lazy val expr4: PackratParser[Expression] = leftBinaryOps(expr4, expr3)("*" -> Multiply, "/" -> Divide)
+    lazy val expr5: PackratParser[Expression] = leftBinaryOps(expr5, expr4)("+" -> Plus, "-" -> Minus)
+    lazy val expr7: PackratParser[Expression] = leftBinaryOps(expr7, expr5)(
       ">" -> Greater, ">=" -> GreaterOrEqual, "<" -> Lesser, "<=" -> LesserOrEqual)
-    lazy val expr6: PackratParser[Expression] = leftBinaryOps(expr6, expr5)("==" -> Equal, "!=" -> NotEqual)
-    lazy val expr7: PackratParser[Expression] = leftBinaryOps(expr7, expr6)("&&" -> And)
-    lazy val expr8: PackratParser[Expression] = leftBinaryOps(expr8, expr7)("||" -> Or)
+    lazy val expr8: PackratParser[Expression] = leftBinaryOps(expr8, expr7)("==" -> Equal, "!=" -> NotEqual)
+    lazy val expr12: PackratParser[Expression] = leftBinaryOps(expr12, expr8)("&&" -> And)
+    lazy val expr13: PackratParser[Expression] = leftBinaryOps(expr13, expr12)("||" -> Or)
 
     lazy val conditional: PackratParser[Conditional] = (expr1 <~ "?") ~! ("(" ~> typ <~ ")") ~! expr1 ~!
           (":" ~> expr1) ^^ Conditional
-    lazy val expr9: PackratParser[Expression] = conditional | expr8
+    lazy val expr14 = conditional | expr13
+    lazy val expr15: PackratParser[Expression] = expr14
   }
 
-  lazy val expression: PackratParser[Expression] = Expressions.expr9
+  lazy val expression: PackratParser[Expression] = Expressions.expr15
 
   val methodSignature = signature(name)
 
