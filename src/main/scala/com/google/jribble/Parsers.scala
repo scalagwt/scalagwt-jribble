@@ -208,39 +208,46 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     lazy val arrayRef: PackratParser[ArrayRef] = expr1 ~ ("[" ~> expression <~ "]") ^^ ArrayRef
     lazy val expr1: PackratParser[Expression] =
       (methodCall | instanceOf | cast | fieldRef | arrayRef | staticCall | staticFieldRef |
-       thisRef | varRef | literal | arrayInitializer | ("(" ~> expr8 <~ ")"))
+       thisRef | varRef | literal | arrayInitializer | ("(" ~> expr9 <~ ")"))
 
     lazy val expr2 = newCall | expr1
     lazy val expr3: PackratParser[Expression] = {
-      lazy val multi: PackratParser[Multiply] = (expr3 <~ "*") ~ expr3 ^^ Multiply
-      lazy val div: PackratParser[Divide] = (expr3 <~ "/") ~ expr3 ^^ Divide
+      lazy val multi: PackratParser[Multiply] = (expr3 <~ "*") ~ expr2 ^^ Multiply
+      lazy val div: PackratParser[Divide] = (expr3 <~ "/") ~ expr2 ^^ Divide
       multi | div | expr2
     }
     lazy val expr4: PackratParser[Expression] = {
-      lazy val plus: PackratParser[Plus] = (expr4 <~ "+") ~ expr4 ^^ Plus
-      lazy val minus: PackratParser[Minus] = (expr4 <~ "-") ~ expr4 ^^ Minus
+      lazy val plus: PackratParser[Plus] = (expr4 <~ "+") ~ expr3 ^^ Plus
+      lazy val minus: PackratParser[Minus] = (expr4 <~ "-") ~ expr3 ^^ Minus
       plus | minus | expr3
     }
     lazy val expr5: PackratParser[Expression] = {
-      lazy val equal: PackratParser[Equal] = (expr5 <~ "==") ~ expr5 ^^ Equal
-      lazy val notEqual: PackratParser[NotEqual] = (expr5 <~ "!=") ~ expr5 ^^ NotEqual
-      equal | notEqual | expr4
+      lazy val gt: PackratParser[Greater] = (expr5 <~ ">") ~ expr4 ^^ Greater
+      lazy val gtEq: PackratParser[GreaterOrEqual] = (expr5 <~ ">=") ~ expr4 ^^ GreaterOrEqual
+      lazy val lt: PackratParser[Lesser] = (expr5 <~ "<") ~ expr4 ^^ Lesser
+      lazy val ltEq: PackratParser[LesserOrEqual] = (expr5 <~ "<=") ~ expr4 ^^ LesserOrEqual
+      gt | gtEq | lt | ltEq | expr4
     }
     lazy val expr6: PackratParser[Expression] = {
-      lazy val and: PackratParser[And] = (expr6 <~ "&&") ~ expr6 ^^ And
-      and | expr5
+      lazy val equal: PackratParser[Equal] = (expr6 <~ "==") ~ expr5 ^^ Equal
+      lazy val notEqual: PackratParser[NotEqual] = (expr6 <~ "!=") ~ expr5 ^^ NotEqual
+      equal | notEqual | expr5
     }
     lazy val expr7: PackratParser[Expression] = {
-      lazy val or: PackratParser[Or] = (expr7 <~ "||") ~ expr7 ^^ Or
-      or | expr6
+      lazy val and: PackratParser[And] = (expr7 <~ "&&") ~ expr6 ^^ And
+      and | expr6
+    }
+    lazy val expr8: PackratParser[Expression] = {
+      lazy val or: PackratParser[Or] = (expr8 <~ "||") ~ expr7 ^^ Or
+      or | expr7
     }
 
     lazy val conditional: PackratParser[Conditional] = (expr1 <~ "?") ~! ("(" ~> typ <~ ")") ~! expr1 ~!
           (":" ~> expr1) ^^ Conditional
-    lazy val expr8: PackratParser[Expression] = conditional | expr7
+    lazy val expr9: PackratParser[Expression] = conditional | expr8
   }
 
-  lazy val expression: PackratParser[Expression] = Expressions.expr8
+  lazy val expression: PackratParser[Expression] = Expressions.expr9
 
   val methodSignature = signature(name)
 
@@ -294,5 +301,5 @@ object Parsers {
                       "continue", "break", "switch", "default", "return",
                       "protected", "throw")
   val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "]", "::", ".", ",", "=",
-                        "<", ">", "==", "!=", "+", "-", "*", "&&", "||")
+                        "<", ">", "==", "!=", "+", "-", "*", "&&", "||", ">", ">=", "<", "<=")
 }

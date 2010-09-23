@@ -124,7 +124,7 @@ case class StaticMethodCall(classRef: Ref, signature: Signature, params: List[Ex
 }
 
 case class Conditional(condition: Expression, typ: Type, then: Expression, elsee: Expression) extends Expression {
-  val precedence = 6
+  val precedence = 9
 }
 
 case class InstanceOf(on: Expression, typ: Ref) extends Expression { val precedence = 1 }
@@ -142,6 +142,10 @@ case class Multiply(lhs: Expression, rhs: Expression) extends BinaryOp("*") { va
 case class Divide(lhs: Expression, rhs: Expression) extends BinaryOp("/") { val precedence = 3 }
 case class Minus(lhs: Expression, rhs: Expression) extends BinaryOp("-") { val precedence = 4 }
 case class Plus(lhs: Expression, rhs: Expression) extends BinaryOp("+") { val precedence = 4 }
+case class Greater(lhs: Expression, rhs: Expression) extends BinaryOp(">") { val precedence = 5 }
+case class GreaterOrEqual(lhs: Expression, rhs: Expression) extends BinaryOp(">=") { val precedence = 5 }
+case class Lesser(lhs: Expression, rhs: Expression) extends BinaryOp("<") { val precedence = 5 }
+case class LesserOrEqual(lhs: Expression, rhs: Expression) extends BinaryOp("<=") { val precedence = 5 }
 case class Equal(lhs: Expression, rhs: Expression) extends BinaryOp("==") { val precedence = 6 }
 case class NotEqual(lhs: Expression, rhs: Expression) extends BinaryOp("!=") { val precedence = 6 }
 case class And(lhs: Expression, rhs: Expression) extends BinaryOp("&&") { val precedence = 7 }

@@ -128,8 +128,11 @@ trait Printers {
   }
 
   implicit object BinaryOpPrinter extends Printer[BinaryOp] {
-    def apply(x: BinaryOp) =
-      NestedExpressionPrinter(x.precedence, x.lhs) + " " + x.symbol + " " + NestedExpressionPrinter(x.precedence, x.rhs)
+    def apply(x: BinaryOp) = "%1s %2s %3s".format(
+      NestedExpressionPrinter(x.precedence, x.lhs),
+      x.symbol,
+      //we pass precedence-1 because operators are left associative
+      NestedExpressionPrinter(x.precedence-1, x.rhs))
   }
 
   implicit object ArrayRefPrinter extends Printer[ArrayRef] {
