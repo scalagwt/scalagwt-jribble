@@ -46,7 +46,7 @@ object Generators {
 
   def array: Gen[Array] = for (t <- typ) yield Array(t)
 
-  def typ: Gen[Type] = Gen.oneOf(ref, primitive, Gen.lzy(array))
+  def typ: Gen[Type] = Gen.frequency(2 -> ref, 4 -> primitive, 1 -> Gen.lzy(array))
 
   def paramsDef: Gen[List[ParamDef]] = {
     val paramDef: Gen[ParamDef] = for (n <- identifier; t <- typ) yield ParamDef(n, t)
