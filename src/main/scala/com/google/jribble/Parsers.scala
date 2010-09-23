@@ -211,36 +211,26 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
        thisRef | varRef | literal | arrayInitializer | ("(" ~> expr9 <~ ")"))
 
     lazy val expr2 = newCall | expr1
-    lazy val expr3: PackratParser[Expression] = {
-      lazy val multi: PackratParser[Multiply] = (expr3 <~ "*") ~ expr2 ^^ Multiply
-      lazy val div: PackratParser[Divide] = (expr3 <~ "/") ~ expr2 ^^ Divide
-      multi | div | expr2
+
+    /**
+     * Takes a list of left-associative operators and turns them into alternative and
+     * then adds higherPrec parser as another alternative.
+     */
+    private def leftBinaryOps(eqPrec: PackratParser[Expression], higherPrec: PackratParser[Expression])
+                             (ops: (String, (Expression, Expression) => BinaryOp)*) = {
+      val opsParsers = ops.toList map {
+        case (symbol, f) => ((eqPrec <~ symbol) ~ higherPrec ^^ f): PackratParser[BinaryOp]
+      }
+      val opsAlternative = opsParsers.reduceLeft[PackratParser[BinaryOp]] { case (ps, p ) => ps | p }
+      opsAlternative | higherPrec
     }
-    lazy val expr4: PackratParser[Expression] = {
-      lazy val plus: PackratParser[Plus] = (expr4 <~ "+") ~ expr3 ^^ Plus
-      lazy val minus: PackratParser[Minus] = (expr4 <~ "-") ~ expr3 ^^ Minus
-      plus | minus | expr3
-    }
-    lazy val expr5: PackratParser[Expression] = {
-      lazy val gt: PackratParser[Greater] = (expr5 <~ ">") ~ expr4 ^^ Greater
-      lazy val gtEq: PackratParser[GreaterOrEqual] = (expr5 <~ ">=") ~ expr4 ^^ GreaterOrEqual
-      lazy val lt: PackratParser[Lesser] = (expr5 <~ "<") ~ expr4 ^^ Lesser
-      lazy val ltEq: PackratParser[LesserOrEqual] = (expr5 <~ "<=") ~ expr4 ^^ LesserOrEqual
-      gt | gtEq | lt | ltEq | expr4
-    }
-    lazy val expr6: PackratParser[Expression] = {
-      lazy val equal: PackratParser[Equal] = (expr6 <~ "==") ~ expr5 ^^ Equal
-      lazy val notEqual: PackratParser[NotEqual] = (expr6 <~ "!=") ~ expr5 ^^ NotEqual
-      equal | notEqual | expr5
-    }
-    lazy val expr7: PackratParser[Expression] = {
-      lazy val and: PackratParser[And] = (expr7 <~ "&&") ~ expr6 ^^ And
-      and | expr6
-    }
-    lazy val expr8: PackratParser[Expression] = {
-      lazy val or: PackratParser[Or] = (expr8 <~ "||") ~ expr7 ^^ Or
-      or | expr7
-    }
+    lazy val expr3: PackratParser[Expression] = leftBinaryOps(expr3, expr2)("*" -> Multiply, "/" -> Divide)
+    lazy val expr4: PackratParser[Expression] = leftBinaryOps(expr4, expr3)("+" -> Plus, "-" -> Minus)
+    lazy val expr5: PackratParser[Expression] = leftBinaryOps(expr5, expr4)(
+      ">" -> Greater, ">=" -> GreaterOrEqual, "<" -> Lesser, "<=" -> LesserOrEqual)
+    lazy val expr6: PackratParser[Expression] = leftBinaryOps(expr6, expr5)("==" -> Equal, "!=" -> NotEqual)
+    lazy val expr7: PackratParser[Expression] = leftBinaryOps(expr7, expr6)("&&" -> And)
+    lazy val expr8: PackratParser[Expression] = leftBinaryOps(expr8, expr7)("||" -> Or)
 
     lazy val conditional: PackratParser[Conditional] = (expr1 <~ "?") ~! ("(" ~> typ <~ ")") ~! expr1 ~!
           (":" ~> expr1) ^^ Conditional
