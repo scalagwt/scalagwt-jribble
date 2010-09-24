@@ -109,7 +109,7 @@ object Generators {
 
   def binaryOp(implicit depth: ExprDepth): Gen[BinaryOp] = {
     val op = Gen.oneOf[(Expression, Expression) => BinaryOp](Multiply, Divide, Minus, Plus, Equal, NotEqual, And, Or,
-      Greater, GreaterOrEqual, Lesser, LesserOrEqual)
+      Greater, GreaterOrEqual, Lesser, LesserOrEqual, BitLShift, BitRShift, BitUnsignedRShift)
     for (o <- op; lhs <- expression; rhs <- expression) yield o(lhs, rhs)
   }
 
