@@ -109,6 +109,8 @@ object Generators {
     for (o <- op; lhs <- expression; rhs <- expression) yield o(lhs, rhs)
   }
 
+  def unaryOp(implicit depth: ExprDepth): Gen[UnaryOp] = for (e <- expression) yield Not(e)
+
   def arrayRef(implicit depth: ExprDepth): Gen[ArrayRef] =
     for (on <- expression; index <- expression) yield ArrayRef(on, index)
 
@@ -125,7 +127,8 @@ object Generators {
     val recursive = Gen.oneOf(Gen.lzy(newCall(newDepth)), Gen.lzy(methodCall(newDepth)),
       Gen.lzy(staticMethodCall(newDepth)), Gen.lzy(conditional(newDepth)), Gen.lzy(instanceOf(newDepth)),
       Gen.lzy(cast(newDepth)), Gen.lzy(arrayInitializer(newDepth)), Gen.lzy(fieldRef(newDepth)),
-      Gen.lzy(binaryOp(newDepth)), Gen.lzy(arrayRef(newDepth)), Gen.lzy(newArray(newDepth)))
+      Gen.lzy(binaryOp(newDepth)), Gen.lzy(arrayRef(newDepth)), Gen.lzy(newArray(newDepth)),
+      Gen.lzy(unaryOp(newDepth)))
 
     Gen.frequency((3*(depth.x+1), nonRecursive), (1, recursive))
   }

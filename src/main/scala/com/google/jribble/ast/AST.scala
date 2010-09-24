@@ -157,6 +157,12 @@ case class NotEqual(lhs: Expression, rhs: Expression) extends BinaryOp("!=") { v
 case class And(lhs: Expression, rhs: Expression) extends BinaryOp("&&") { val precedence = 12 }
 case class Or(lhs: Expression, rhs: Expression) extends BinaryOp("||") { val precedence = 13 }
 
+sealed abstract class UnaryOp(val symbol: String) extends Expression {
+  val expression: Expression
+}
+
+case class Not(expression: Expression) extends UnaryOp("!") { val precedence = 2 }
+
 case class ArrayRef(on: Expression, index: Expression) extends Expression {
   val precedence = 1
 }

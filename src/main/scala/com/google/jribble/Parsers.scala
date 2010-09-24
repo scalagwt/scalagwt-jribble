@@ -211,8 +211,12 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     lazy val expr1: PackratParser[Expression] =
       (methodCall | instanceOf | cast | fieldRef | arrayRef | staticCall | staticFieldRef |
        thisRef | varRef | literal | arrayInitializer | ("(" ~> expr15 <~ ")"))
+    lazy val expr2: PackratParser[Expression] = {
+      lazy val not: PackratParser[Not] = "!" ~> expr2 ^^ Not
+      not | expr1
+    }
 
-    lazy val expr3 = newCall | newRef | expr1
+    lazy val expr3 = newCall | newRef | expr2
 
     /**
      * Takes a list of left-associative operators and turns them into alternative and
@@ -294,5 +298,6 @@ object Parsers {
                       "continue", "break", "switch", "default", "return",
                       "protected", "throw")
   val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "]", "::", ".", ",", "=",
-                        "<", ">", "==", "!=", "+", "-", "*", "&&", "||", ">", ">=", "<", "<=")
+                        "<", ">", "==", "!=", "+", "-", "*", "&&", "||", ">", ">=", "<", "<=",
+                        "!")
 }

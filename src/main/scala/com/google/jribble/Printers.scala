@@ -135,6 +135,10 @@ trait Printers {
       NestedExpressionPrinter(x.precedence-1, x.rhs))
   }
 
+  implicit object UnaryOpPrinter extends Printer[UnaryOp] {
+    def apply(x: UnaryOp) = x.symbol + NestedExpressionPrinter(x.precedence, x.expression)
+  }
+
   implicit object ArrayRefPrinter extends Printer[ArrayRef] {
     def apply(x: ArrayRef) = NestedExpressionPrinter(x.precedence, x.on) + "[" + ExpressionPrinter(x.index) + "]"
   }
@@ -168,6 +172,7 @@ trait Printers {
         case x: BinaryOp => BinaryOpPrinter(x)
         case x: ArrayRef => ArrayRefPrinter(x)
         case x: NewArray => NewArrayPrinter(x)
+        case x: UnaryOp => UnaryOpPrinter(x)
       }
       if (surroundingPrecedence < nested.precedence) "(" + printed + ")" else printed
     }
