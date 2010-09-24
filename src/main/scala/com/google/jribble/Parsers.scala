@@ -273,7 +273,10 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
       def safeToInt(s: String): Option[Int] = try { Some(s.toInt) } catch { case _: NumberFormatException => None }
       accept("int literal", { case lexical.NumericLit(x) if safeToInt(x).isDefined => IntLiteral(safeToInt(x).get) })
     }
-    bool | char | (stringLit ^^ StringLiteral) | int
+    val long: Parser[LongLiteral] = {
+      accept("long literal", { case lexical.NumericLit(x) if x endsWith "L" => LongLiteral(x.take(x.size-1).toLong) })
+    } 
+    bool | char | (stringLit ^^ StringLiteral) | long | int
   }
 
   /** Parse some prefix of reader `in' with parser `p' */
