@@ -213,7 +213,8 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
        thisRef | varRef | literal | arrayInitializer | ("(" ~> expr15 <~ ")"))
     lazy val expr2: PackratParser[Expression] = {
       lazy val not: PackratParser[Not] = "!" ~> expr2 ^^ Not
-      not | expr1
+      lazy val minus: PackratParser[Expression] = "-" ~> expr2 ^^ UnaryMinus
+      not | minus | expr1
     }
 
     lazy val expr3 = newCall | newRef | expr2

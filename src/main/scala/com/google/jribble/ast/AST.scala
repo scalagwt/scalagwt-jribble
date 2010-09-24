@@ -162,6 +162,7 @@ sealed abstract class UnaryOp(val symbol: String) extends Expression {
 }
 
 case class Not(expression: Expression) extends UnaryOp("!") { val precedence = 2 }
+case class UnaryMinus(expression: Expression) extends UnaryOp("-") { val precedence = 2 }
 
 case class ArrayRef(on: Expression, index: Expression) extends Expression {
   val precedence = 1

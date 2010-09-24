@@ -79,8 +79,12 @@ object Generators {
   
   def newCall(implicit depth: ExprDepth): Gen[NewCall] =  for (c <- thisConstructorCall) yield NewCall(c)
 
-  def methodCall(implicit depth: ExprDepth): Gen[MethodCall] =
-    for (on <- expression; s <- methodSignature; p <- params) yield MethodCall(on, s, p)
+  def methodCall(implicit depth: ExprDepth): Gen[MethodCall] = for {
+    on <- expression if !on.isInstanceOf[Literal]
+    s <- methodSignature
+    p <- params
+  } yield MethodCall(on, s, p)
+
   def staticMethodCall(implicit depth: ExprDepth): Gen[StaticMethodCall] =
     for (c <- ref; s <- methodSignature; p <- params) yield StaticMethodCall(c, s, p)
   def conditional(implicit depth: ExprDepth): Gen[Conditional] = for {
@@ -109,7 +113,10 @@ object Generators {
     for (o <- op; lhs <- expression; rhs <- expression) yield o(lhs, rhs)
   }
 
-  def unaryOp(implicit depth: ExprDepth): Gen[UnaryOp] = for (e <- expression) yield Not(e)
+  def unaryOp(implicit depth: ExprDepth): Gen[UnaryOp] = {
+    val op = Gen.oneOf[Expression => UnaryOp](Not, UnaryMinus)
+    for (o <- op; e <- expression) yield o(e)
+  }
 
   def arrayRef(implicit depth: ExprDepth): Gen[ArrayRef] =
     for (on <- expression; index <- expression) yield ArrayRef(on, index)

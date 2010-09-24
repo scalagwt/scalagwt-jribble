@@ -314,9 +314,11 @@ object Shrinkers {
   }
 
   implicit def shrinkUnaryOp: Shrink[UnaryOp] = Shrink { x: UnaryOp =>
-    x match {
-      case x@Not(expression) => (for (v <- shrink(expression)) yield x.copy(expression = v))
+    def copy(e: Expression) = x match {
+      case x: Not => x.copy(expression = e)
+      case x: UnaryMinus => x.copy(expression = e)
     }
+    for (v <- shrink(x.expression)) yield copy(v)
   }
 
   implicit def shrinkLiteral: Shrink[Literal] = Shrink { x: Literal =>

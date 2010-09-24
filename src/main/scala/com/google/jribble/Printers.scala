@@ -136,7 +136,11 @@ trait Printers {
   }
 
   implicit object UnaryOpPrinter extends Printer[UnaryOp] {
-    def apply(x: UnaryOp) = x.symbol + NestedExpressionPrinter(x.precedence, x.expression)
+    def apply(x: UnaryOp) = x match {
+      //need a special case to distinguish between UnaryMinus(IntLiteral(1)) and IntLiteral(-1)
+      case UnaryMinus(IntLiteral(x)) => "-(%1d)".format(x)
+      case x => x.symbol + NestedExpressionPrinter(x.precedence-1, x.expression)
+    }
   }
 
   implicit object ArrayRefPrinter extends Printer[ArrayRef] {
