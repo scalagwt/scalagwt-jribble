@@ -159,6 +159,9 @@ case class Or(lhs: Expression, rhs: Expression) extends BinaryOp("||") { val pre
 case class BitLShift(lhs: Expression, rhs: Expression) extends BinaryOp("<<") { val precedence = 6 }
 case class BitRShift(lhs: Expression, rhs: Expression) extends BinaryOp(">>") { val precedence = 6 }
 case class BitUnsignedRShift(lhs: Expression, rhs: Expression) extends BinaryOp(">>>") { val precedence = 6 }
+case class BitAnd(lhs: Expression, rhs: Expression) extends BinaryOp("&") { val precedence = 9 }
+case class BitXor(lhs: Expression, rhs: Expression) extends BinaryOp("^") { val precedence = 10 }
+case class BitOr(lhs: Expression, rhs: Expression) extends BinaryOp("|") { val precedence = 11 }
 
 sealed abstract class UnaryOp(val symbol: String) extends Expression {
   val expression: Expression

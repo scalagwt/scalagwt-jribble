@@ -299,6 +299,9 @@ object Shrinkers {
       case x: BitLShift => x.copy(lhs = lhs, rhs = rhs)
       case x: BitRShift => x.copy(lhs = lhs, rhs = rhs)
       case x: BitUnsignedRShift => x.copy(lhs = lhs, rhs = rhs)
+      case x: BitAnd => x.copy(lhs = lhs, rhs = rhs)
+      case x: BitXor => x.copy(lhs = lhs, rhs = rhs)
+      case x: BitOr => x.copy(lhs = lhs, rhs = rhs)
     }
     (for (v <- shrink(x.lhs)) yield copy(lhs = v)) append
     (for (v <- shrink(x.rhs)) yield copy(rhs = v))
