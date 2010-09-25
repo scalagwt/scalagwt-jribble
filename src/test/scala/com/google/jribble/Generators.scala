@@ -81,7 +81,7 @@ object Generators {
   def newCall(implicit depth: ExprDepth): Gen[NewCall] =  for (c <- thisConstructorCall) yield NewCall(c)
 
   def methodCall(implicit depth: ExprDepth): Gen[MethodCall] = for {
-    on <- expression if !on.isInstanceOf[Literal]
+    on <- expression if isDotTarget(on)
     s <- methodSignature
     p <- params
   } yield MethodCall(on, s, p)
@@ -104,7 +104,7 @@ object Generators {
     for (t <- typ; elements <- Gen.resize(3,Gen.listOf(expression))) yield ArrayInitializer(t, elements)
 
   def fieldRef(implicit depth: ExprDepth): Gen[FieldRef] =
-    for (on <- expression; t <- typ; n <- identifier) yield FieldRef(on, t, n)
+    for (on <- expression if isDotTarget(on); t <- typ; n <- identifier) yield FieldRef(on, t, n)
 
   def staticFieldRef: Gen[StaticFieldRef] = for (on <- ref; n <- identifier) yield StaticFieldRef(on, n)
 
@@ -319,4 +319,10 @@ object Generators {
   implicit val arbFieldDef = Arbitrary(fieldDef)
   implicit val arbClassDef = Arbitrary(classDef)
   implicit val arbInterfaceDef = Arbitrary(interfaceDef)
+
+  private def isDotTarget(x: Expression) = x match {
+    case UnaryMinus(_: Primitive) => false
+    case _: Primitive => false
+    case _ => true
+  }
 }
