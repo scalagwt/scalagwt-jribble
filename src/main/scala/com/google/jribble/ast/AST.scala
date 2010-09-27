@@ -133,7 +133,7 @@ case class Conditional(condition: Expression, typ: Type, then: Expression, elsee
   val precedence = 14
 }
 
-case class InstanceOf(on: Expression, typ: Ref) extends Expression { val precedence = 1 }
+case class InstanceOf(on: Expression, typ: Type) extends Expression { val precedence = 1 }
 
 case class Cast(on: Expression, typ: Type) extends Expression { val precedence = 1 }
 

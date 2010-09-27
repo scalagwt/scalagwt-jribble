@@ -108,7 +108,7 @@ trait Printers {
 
   implicit object InstanceOfPrinter extends Printer[InstanceOf] {
     def apply(x: InstanceOf) =
-      NestedExpressionPrinter(x.precedence, x.on) + "." + "<instanceof>" + "(" + RefPrinter(x.typ) + ")"
+      NestedExpressionPrinter(x.precedence, x.on) + "." + "<instanceof>" + "(" + TypePrinter(x.typ) + ")"
   }
 
   implicit object CastPrinter extends Printer[Cast] {

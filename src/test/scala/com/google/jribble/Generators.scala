@@ -96,7 +96,7 @@ object Generators {
   } yield Conditional(condition, typ, then, elsee)
 
   def instanceOf(implicit depth: ExprDepth): Gen[InstanceOf] =
-    for (on <- expression; t <- ref) yield InstanceOf(on, t)
+    for (on <- expression if isDotTarget(on); t <- typ) yield InstanceOf(on, t)
 
   def cast(implicit depth: ExprDepth): Gen[Cast] = for (on <- expression; t <- typ) yield Cast(on, t)
 
