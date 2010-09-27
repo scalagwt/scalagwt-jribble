@@ -128,15 +128,17 @@ object Generators {
     dims <- Gen.resize(3, Gen.listOf(exprOpt)) if !dims.isEmpty
   } yield NewArray(t, dims)
 
+  def arrayLength(implicit depth: ExprDepth): Gen[ArrayLength] = for (on <- expression) yield ArrayLength(on)
 
   def expression(implicit depth: ExprDepth): Gen[Expression] = {
-    val nonRecursive = Gen.frequency((5, literal), (1, varRef), (1, Gen.value(ThisRef)), (1, staticFieldRef))
+    val nonRecursive = Gen.frequency((5, literal), (1, varRef), (1, Gen.value(ThisRef)), (1, staticFieldRef),
+      (1, Gen.value(SuperRef)))
     val newDepth = depth.map(_+1)
     val recursive = Gen.oneOf(Gen.lzy(newCall(newDepth)), Gen.lzy(methodCall(newDepth)),
       Gen.lzy(staticMethodCall(newDepth)), Gen.lzy(conditional(newDepth)), Gen.lzy(instanceOf(newDepth)),
       Gen.lzy(cast(newDepth)), Gen.lzy(arrayInitializer(newDepth)), Gen.lzy(fieldRef(newDepth)),
       Gen.lzy(binaryOp(newDepth)), Gen.lzy(arrayRef(newDepth)), Gen.lzy(newArray(newDepth)),
-      Gen.lzy(unaryOp(newDepth)))
+      Gen.lzy(unaryOp(newDepth)), Gen.lzy(arrayLength(newDepth)))
 
     Gen.frequency((3*(depth.x+1), nonRecursive), (1, recursive))
   }

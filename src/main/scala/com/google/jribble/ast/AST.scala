@@ -111,6 +111,7 @@ case class StringLiteral(v: String) extends Literal
 
 case class VarRef(name: String) extends Expression { val precedence = 1 }
 case object ThisRef extends Expression { val precedence = 1 }
+case object SuperRef extends Expression { val precedence = 1 }
 
 case class ArrayInitializer(typ: Type, elements: List[Expression]) extends Expression { val precedence = 1 }
 
@@ -178,6 +179,10 @@ case class NewArray(typ: Type, dims: List[Option[Expression]]) extends Expressio
   assert(!dims.isEmpty)
   val precedence = 3
   def jdims: JList[Option[Expression]] = dims
+}
+
+case class ArrayLength(on: Expression) extends Expression {
+  val precedence = 1
 }
 
 sealed abstract class Type extends AST

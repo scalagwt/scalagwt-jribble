@@ -147,6 +147,7 @@ object Shrinkers {
   implicit def shrinkExpression: Shrink[Expression] = Shrink {
     case x: VarRef => shrink(x)
     case ThisRef => shrink(ThisRef)
+    case SuperRef => shrink(SuperRef)
     case x@MethodCall(on, _, params) =>
       shrink(x) append
       shrink(on) append
@@ -187,6 +188,9 @@ object Shrinkers {
     case x@NewArray(_, dims) =>
       shrink(x) append
       dims.flatten.map(shrink(_)).foldLeft(Stream.empty[Expression])(interleave)
+    case x@ArrayLength(on) =>
+      shrink(x) append
+      shrink(on)
     case x: UnaryOp =>
       shrink(x) append
       shrink(x.expression)
@@ -317,6 +321,10 @@ object Shrinkers {
     case x@NewArray(typ, dims) =>
       (for (v <- shrink(typ)) yield x.copy(typ = v)) append
       (for (v <- shrink(dims) if !v.isEmpty) yield x.copy(dims = v))
+  }
+
+  implicit def shrinkArrayLength: Shrink[ArrayLength] = Shrink {
+    case x@ArrayLength(on) => for (v <- shrink(on)) yield x.copy(on = v)
   }
 
   implicit def shrinkUnaryOp: Shrink[UnaryOp] = Shrink { x: UnaryOp =>

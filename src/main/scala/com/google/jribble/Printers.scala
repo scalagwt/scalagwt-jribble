@@ -154,6 +154,10 @@ trait Printers {
       x.dims.map("[" + _.map(ExpressionPrinter).getOrElse("") + "]").mkString("")
   }
 
+  implicit object ArrayLengthPrinter extends Printer[ArrayLength] {
+    def apply(x: ArrayLength) = NestedExpressionPrinter(x.precedence, x.on) + ".<length>"
+  }
+
   implicit object ExpressionPrinter extends Printer[Expression] {
     //surrounding for expression which is not nested in another expression have implicit infinite precedence
     def apply(x: Expression) = NestedExpressionPrinter(10000, x)
@@ -165,6 +169,7 @@ trait Printers {
       val printed = nested match {
         case x: Literal => LiteralPrinter(x)
         case ThisRef => "this"
+        case SuperRef => "super"
         case x: VarRef => x.name
         case x: NewCall => NewCallPrinter(x)
         case x: MethodCall => MethodCallPrinter(x)
@@ -178,6 +183,7 @@ trait Printers {
         case x: BinaryOp => BinaryOpPrinter(x)
         case x: ArrayRef => ArrayRefPrinter(x)
         case x: NewArray => NewArrayPrinter(x)
+        case x: ArrayLength => ArrayLengthPrinter(x)
         case x: UnaryOp => UnaryOpPrinter(x)
       }
       if (surroundingPrecedence < nested.precedence) "(" + printed + ")" else printed
