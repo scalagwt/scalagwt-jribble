@@ -71,6 +71,8 @@ trait Printers {
       case BooleanLiteral(v) => v.toString
       case IntLiteral(v) => v.toString
       case LongLiteral(v) => v.toString + "L"
+      case FloatLiteral(v) => v.toString + "F"
+      case DoubleLiteral(v) => v.toString + "D"
       case _ => error("to be implemented")
     }
   }
@@ -139,8 +141,8 @@ trait Printers {
   implicit object UnaryOpPrinter extends Printer[UnaryOp] {
     def apply(x: UnaryOp) = x match {
       //need a special case to distinguish between UnaryMinus(IntLiteral(1)) and IntLiteral(-1)
-      case UnaryMinus(IntLiteral(x)) => "-(%1d)".format(x)
-      case UnaryMinus(LongLiteral(x)) => "-(%1dL)".format(x)
+      case UnaryMinus(x@(IntLiteral(_) | LongLiteral(_) | FloatLiteral(_) | DoubleLiteral(_))) =>
+        "-(%1s)".format(ExpressionPrinter(x))
       case x => x.symbol + NestedExpressionPrinter(x.precedence-1, x.expression)
     }
   }

@@ -8,4 +8,6 @@ trait JribbleTokens extends StdTokens {
     def chars = char.toString
   }
 
+  case class FloatingPointLit(chars: String) extends Token
+
 }
