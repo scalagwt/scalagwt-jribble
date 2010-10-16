@@ -36,6 +36,8 @@ case class ClassDef(modifs: Set[String], name: Ref, ext: Option[Ref], implements
 
   def jmethodDefs: JList[MethodDef] = body collect { case x: MethodDef => x }
 
+  def jfieldDefs: JList[FieldDef] = body collect { case x: FieldDef => x }
+
   def jimplements: JList[Ref] = implements
 }
 
@@ -73,6 +75,7 @@ case class If(condition: Expression, then: Block, elsee: Option[Block]) extends 
 case class Try(block: Block, catches: List[(Ref, String, Block)], finalizer: Option[Block]) extends Statement {
   //TODO(grek): Figure out if this requirement is needed for jribble
   assert(!(catches.isEmpty && finalizer.isEmpty))
+  def jcatches: JList[(Ref, String, Block)] = catches
 }
 
 case class While(label: Option[String], condition: Expression, block: Block) extends Statement
@@ -80,7 +83,10 @@ case class While(label: Option[String], condition: Expression, block: Block) ext
 case class Continue(label: Option[String]) extends Statement
 case class Break(label: Option[String]) extends Statement
 
-case class Switch(expression: Expression, groups: List[(Literal, Block)], default: Option[Block]) extends Statement
+case class Switch(expression: Expression, groups: List[(Literal, Block)], default: Option[Block]) extends Statement {
+  def jgroups: JList[(Literal, Block)] = groups
+  def jdefault: Option[Block] = default
+}
 
 case class Return(expression: Option[Expression]) extends Statement
 
@@ -113,7 +119,10 @@ case class VarRef(name: String) extends Expression { val precedence = 1 }
 case object ThisRef extends Expression { val precedence = 1 }
 case object SuperRef extends Expression { val precedence = 1 }
 
-case class ArrayInitializer(typ: Type, elements: List[Expression]) extends Expression { val precedence = 1 }
+case class ArrayInitializer(typ: Type, elements: List[Expression]) extends Expression {
+  val precedence = 1
+  val jelements: JList[Expression] = elements
+}
 
 case class Signature(on: Ref, name: String, paramTypes: List[Type], returnType: Type) extends AST {
   def jparamTypes: JList[Type] = paramTypes
