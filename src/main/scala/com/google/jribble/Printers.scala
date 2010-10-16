@@ -65,7 +65,11 @@ trait Printers {
   //todo (grek): implement printing of literals
   implicit object LiteralPrinter extends Printer[Literal] {
     def apply(x: Literal) = x match {
-      case CharLiteral(v) => "'" + v + "'"
+      case CharLiteral(v) =>
+        if (v.isControl)
+          "'\\0" + Integer.toOctalString(v.asInstanceOf[Int]) + "'"
+        else
+          "'" + v + "'"
       //todo (grek): implement escaping
       case StringLiteral(v) => "\"" + v + "\""
       case BooleanLiteral(v) => v.toString

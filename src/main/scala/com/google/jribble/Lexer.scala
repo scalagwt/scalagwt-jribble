@@ -18,6 +18,9 @@ class Lexer extends StdLexical with JribbleTokens {
     | integer ~ opt('L')                 ^^ {
       case integer ~ ending => NumericLit(integer + ending.getOrElse(""))
     }
+    | '\'' ~ '\\' ~ rep1(digit) ~ '\''                  ^^ { case '\'' ~ '\\' ~ digits ~ '\'' =>
+      CharLit(Integer.decode(digits mkString "").intValue.asInstanceOf[Char])
+    }
     | '\'' ~ chrExcept('\'', '\n', EofCh) ~ '\''        ^^ { case '\'' ~ char ~ '\'' => CharLit(char) }
     | '\"' ~ rep( chrExcept('\"', '\n', EofCh) ) ~ '\"' ^^ { case '\"' ~ chars ~ '\"' => StringLit(chars mkString "") }
     | EofCh                                             ^^^ EOF
