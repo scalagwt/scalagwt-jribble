@@ -17,8 +17,8 @@
 package com.google.jribble
 
 import com.google.jribble.ast._
-import scala.util.parsing.combinator.syntactical.StdTokenParsers
-import scala.util.parsing.combinator.{PackratParsers, ImplicitConversions}
+import fork.combinator.syntactical.StdTokenParsers
+import fork.combinator.{PackratParsers, ImplicitConversions}
 
 /**
  * Collection of jribble parsers.

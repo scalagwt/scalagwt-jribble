@@ -1,7 +1,7 @@
 package com.google.jribble
 
-import util.parsing.combinator.lexical.StdLexical
-import util.parsing.input.CharArrayReader.EofCh
+import fork.combinator.lexical.StdLexical
+import scala.util.parsing.input.CharArrayReader.EofCh
 
 class Lexer extends StdLexical with JribbleTokens {
 
