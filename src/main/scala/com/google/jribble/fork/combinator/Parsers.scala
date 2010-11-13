@@ -204,8 +204,13 @@ trait Parsers {
 
     // no filter yet, dealing with zero is tricky!
   
-    def append[U >: T](p: => Parser[U]): Parser[U] 
-      = Parser{ in => this(in) append p(in)}
+    def append[U >: T](p: => Parser[U]): Parser[U] = {
+      val outerThis = this
+      new Parser[U] {
+        private lazy val p0 = p
+        def apply(in: Input) = outerThis(in) append p0(in)
+      }
+    }
 
                                       
     // the operator formerly known as +++, ++, &, but now, behold the venerable ~
@@ -222,7 +227,14 @@ trait Parsers {
      *         that contains the result of `p' and that of `q'. 
      *         The resulting parser fails if either `p' or `q' fails.
      */
-    def ~ [U](p: => Parser[U]): Parser[~[T, U]] = (for(a <- this; b <- p) yield new ~(a,b)).named("~")
+    def ~ [U](p: => Parser[U]): Parser[~[T, U]] = {
+      val outerThis = this
+      new Parser[~[T,U]] {
+        lazy val p0 = p
+        lazy val q = for(a <- outerThis; b <- p0) yield new ~(a,b)
+        def apply(in: Input) = q(in)
+      }.named("~")
+    }
 
     /** A parser combinator for sequential composition which keeps only the right result 
      *
@@ -232,7 +244,14 @@ trait Parsers {
      * @param q a parser that will be executed after `p' (this parser) succeeds
      * @return a `Parser' that -- on success -- returns the result of `q'.
      */
-    def ~> [U](p: => Parser[U]): Parser[U] = (for(a <- this; b <- p) yield b).named("~>")
+    def ~> [U](p: => Parser[U]): Parser[U] = {
+      val outerThis = this
+      new Parser[U] {
+        lazy val p0 = p
+        lazy val q = for(a <- outerThis; b <- p0) yield b
+        def apply(in: Input) = q(in)
+      }.named("~>")
+    }
 
     /** A parser combinator for sequential composition which keeps only the left result 
      *
@@ -244,7 +263,14 @@ trait Parsers {
      * @param q a parser that will be executed after `p' (this parser) succeeds
      * @return a `Parser' that -- on success -- returns the result of `p'.
      */
-    def <~ [U](p: => Parser[U]): Parser[T] = (for(a <- this; b <- p) yield a).named("<~")
+    def <~ [U](p: => Parser[U]): Parser[T] = {
+      val outerThis = this
+      new Parser[T] {
+        lazy val p0 = p
+        lazy val q = for(a <- outerThis; b <- p0) yield a
+        def apply(in: Input) = q(in)
+      }.named("<~")
+    }
 
      /* not really useful: V cannot be inferred because Parser is covariant in first type parameter (V is always trivially Nothing)
     def ~~ [U, V](q: => Parser[U])(implicit combine: (T, U) => V): Parser[V] = new Parser[V] {
@@ -574,11 +600,10 @@ trait Parsers {
    * @return A parser that returns a list of results produced by first applying `f' and then 
    *         repeatedly `p' to the input (it only succeeds if `f' matches).
    */
-  def rep1[T](first: => Parser[T], p: => Parser[T]): Parser[List[T]] = Parser { in =>
-    val elems = new ListBuffer[T]
-
-    def continue(in: Input): ParseResult[List[T]] = {
-      val p0 = p    // avoid repeatedly re-evaluating by-name parser
+  def rep1[T](first: => Parser[T], p: => Parser[T]): Parser[List[T]] = new Parser[List[T]] {
+    lazy val p0 = p    // avoid repeatedly re-evaluating by-name parser
+    lazy val first0 = first
+    def continue(elems: ListBuffer[T], in: Input): ParseResult[List[T]] = {
       @tailrec def applyp(in0: Input): ParseResult[List[T]] = p0(in0) match {
         case Success(x, rest) => elems += x ; applyp(rest)
         case _                => Success(elems.toList, in0)
@@ -586,9 +611,12 @@ trait Parsers {
       
       applyp(in)
     }
-
-    first(in) match {
-      case Success(x, rest) => elems += x ; continue(rest)
+    
+    def apply(in: Input) = first0(in) match {
+      case Success(x, rest) => {     
+        val elems = ListBuffer(x)
+        continue(elems, rest)
+      }
       case ns: NoSuccess    => ns
     }
   }
