@@ -6,8 +6,8 @@ import util.parsing.input.CharArrayReader.EofCh
 class Lexer extends StdLexical with JribbleTokens {
 
   // see `token' in `Scanners'
-  override def token: Parser[Token] =
-    ( identChar ~ rep( identChar | digit )              ^^ { case first ~ rest => processIdent(first :: rest mkString "") }
+  override lazy val token: Parser[Token] =
+    ( identChar ~ rep(identChar | digit)             ^^ { case first ~ rest => processIdent(first :: rest mkString "") }
     | '`' ~> rep1(identChar) <~ '`'                     ^? {
       case chars if reserved contains (chars mkString "") => Identifier(chars mkString "") 
     }
@@ -37,6 +37,6 @@ class Lexer extends StdLexical with JribbleTokens {
 
   override val identChar = letter | elem('_') | elem('$')
 
-  override def whitespace = rep(whitespaceChar)
+  override val whitespace = rep(whitespaceChar)
 
 }
