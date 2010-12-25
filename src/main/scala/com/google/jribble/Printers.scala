@@ -268,8 +268,8 @@ trait Printers {
   }
 
   implicit object ConstructorPrinter extends Printer[Constructor] {
-    //todo (grek): hard-coded public
-    def apply(x: Constructor) = "public " + x.name + ParamsDefPrinter(x.params) + " " + BlockPrinter(x.body)
+    def apply(x: Constructor) = x.modifs.map(_ + " ").mkString + x.name +
+      ParamsDefPrinter(x.params) + " " + BlockPrinter(x.body)
   }
 
   implicit object MethodDefPrinter extends Printer[MethodDef] {

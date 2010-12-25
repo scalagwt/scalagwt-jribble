@@ -118,8 +118,10 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
 
   def constructorBody: Parser[Block] = statements(constructorCallStatement | methodStatement) ^^ (Block(_))
 
-  //todo (grek): hard-coded "public"
-  def constructor: Parser[Constructor] = ("public" ~> "this" ~ paramsDef) ~! constructorBody ^^ Constructor
+  def constructor: Parser[Constructor] = {
+    val allowed = Set("public", "private", "protected")
+    (modifs(allowed).map(_.toSet) ~ "this" ~ paramsDef) ~! constructorBody ^^ Constructor
+  }
 
   val methodModifs: Parser[Set[String]] = {
     val allowed = Set("public", "final", "static", "private", "protected", "abstract")

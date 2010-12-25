@@ -226,8 +226,10 @@ object Generators {
       s <- Gen.resize(1, Gen.listOf(superConstructorCall | thisConstructorCall(ExprDepth(0))))
       ss <- methodStatements(StmtDepth(0))
     } yield Block(scala.util.Random.shuffle(s ::: ss))
-  def constructor: Gen[Constructor] =
-    for (p <- paramsDef; b <- constructorBody) yield Constructor("this", p, b)
+  def constructor: Gen[Constructor] = {
+    val modifs = Gen.listOf(Gen.oneOf("private", "protected", "public")).map(_.toSet).filter(!_.isEmpty)
+    for (m <- modifs; p <- paramsDef; b <- constructorBody) yield Constructor(m, "this", p, b)
+  }
 
   def block(implicit depth: StmtDepth): Gen[Block] = methodStatements map (Block(_))
   def methodBody: Gen[Block] = block(StmtDepth(0))

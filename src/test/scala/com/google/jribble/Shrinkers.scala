@@ -38,7 +38,8 @@ object Shrinkers {
   }
 
   implicit def shrinkConstructor: Shrink[Constructor] = Shrink {
-    case x@Constructor(name, params, body) =>
+    case x@Constructor(modifs, name, params, body) =>
+      (for (v <- shrink(modifs)) yield x.copy(modifs = v)) append
       (for (v <- shrinkName.shrink(name)) yield x.copy(name = v)) append
       (for (v <- shrink(params)) yield x.copy(params = v)) append
       (for (v <- shrink(body)) yield x.copy(body = v))

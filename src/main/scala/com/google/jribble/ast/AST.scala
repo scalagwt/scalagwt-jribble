@@ -48,7 +48,8 @@ case class InterfaceDef(modifs: Set[String], name: Ref, ext: List[Ref], body: Li
 
 case class ParamDef(name: String, typ: Type) extends AST
 
-case class Constructor(name: String, params: List[ParamDef], body: Block) extends ClassBodyElement {
+case class Constructor(modifs: Set[String], name: String, params: List[ParamDef], body: Block)
+  extends ClassBodyElement {
   def jparams: JList[ParamDef] = params
   def signature(enclosing: Ref) = Signature(enclosing, enclosing.name, params.map(_.typ), Void)
 }
