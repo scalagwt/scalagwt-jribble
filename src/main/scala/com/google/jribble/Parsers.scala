@@ -275,14 +275,19 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     }
     val char: Parser[CharLiteral] =
       accept("character literal", { case lexical.CharLit(x) => CharLiteral(x)})
-    val int: Parser[IntLiteral] = {
-      def safeToInt(s: String): Option[Int] = try { Some(s.toInt) } catch { case _: NumberFormatException => None }
-      accept("int literal", { case lexical.NumericLit(x) if safeToInt(x).isDefined => IntLiteral(safeToInt(x).get) })
-    }
-    val long: Parser[LongLiteral] = {
+    val int: Parser[IntLiteral] =
+      accept("int literal", { case lexical.NumericLit(x) => IntLiteral(x.toInt) })
+    val long: Parser[LongLiteral] =
       accept("long literal", { case lexical.NumericLit(x) if x endsWith "L" => LongLiteral(x.take(x.size-1).toLong) })
-    } 
-    bool | char | (stringLit ^^ StringLiteral) | long | int
+    val float: Parser[FloatLiteral] =
+      accept("float literal", { case lexical.FloatingPointLit(x) if x endsWith "F" => 
+        FloatLiteral(x.take(x.size-1).toFloat)
+      })
+    val double: Parser[DoubleLiteral] =
+      accept("double literal", {
+        case lexical.FloatingPointLit(x) if x endsWith "D" => DoubleLiteral(x.take(x.size-1).toDouble)
+      })
+    bool | char | (stringLit ^^ StringLiteral) | long | float | double | int
   }
 
   /** Parse some prefix of reader `in' with parser `p' */
