@@ -147,6 +147,7 @@ sealed abstract class BinaryOp(val symbol: String) extends Expression {
 }
 case class Multiply(lhs: Expression, rhs: Expression) extends BinaryOp("*") { val precedence = 4 }
 case class Divide(lhs: Expression, rhs: Expression) extends BinaryOp("/") { val precedence = 4 }
+case class Modulus(lhs: Expression, rhs: Expression) extends BinaryOp("%") { val precedence = 4 }
 case class Minus(lhs: Expression, rhs: Expression) extends BinaryOp("-") { val precedence = 5 }
 case class Plus(lhs: Expression, rhs: Expression) extends BinaryOp("+") { val precedence = 5 }
 case class Greater(lhs: Expression, rhs: Expression) extends BinaryOp(">") { val precedence = 7 }
@@ -170,6 +171,7 @@ sealed abstract class UnaryOp(val symbol: String) extends Expression {
 
 case class Not(expression: Expression) extends UnaryOp("!") { val precedence = 2 }
 case class UnaryMinus(expression: Expression) extends UnaryOp("-") { val precedence = 2 }
+case class BitNot(expression: Expression) extends UnaryOp("~") { val precedence = 2 }
 
 case class ArrayRef(on: Expression, index: Expression) extends Expression {
   val precedence = 1

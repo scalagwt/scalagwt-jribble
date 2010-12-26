@@ -290,6 +290,7 @@ object Shrinkers {
     def copy(lhs: Expression = x.lhs, rhs: Expression = x.rhs) = x match {
       case x: Multiply => x.copy(lhs = lhs, rhs = rhs)
       case x: Divide => x.copy(lhs = lhs, rhs = rhs)
+      case x: Modulus => x.copy(lhs = lhs, rhs = rhs)
       case x: Plus => x.copy(lhs = lhs, rhs = rhs)
       case x: Minus => x.copy(lhs = lhs, rhs = rhs)
       case x: Greater => x.copy(lhs = lhs, rhs = rhs)
@@ -331,6 +332,7 @@ object Shrinkers {
     def copy(e: Expression) = x match {
       case x: Not => x.copy(expression = e)
       case x: UnaryMinus => x.copy(expression = e)
+      case x: BitNot => x.copy(expression = e)
     }
     for (v <- shrink(x.expression)) yield copy(v)
   }

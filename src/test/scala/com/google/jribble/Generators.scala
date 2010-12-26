@@ -111,13 +111,14 @@ object Generators {
   def staticFieldRef: Gen[StaticFieldRef] = for (on <- ref; n <- identifier) yield StaticFieldRef(on, n)
 
   def binaryOp(implicit depth: ExprDepth): Gen[BinaryOp] = {
-    val op = Gen.oneOf[(Expression, Expression) => BinaryOp](Multiply, Divide, Minus, Plus, Equal, NotEqual, And, Or,
-      Greater, GreaterOrEqual, Lesser, LesserOrEqual, BitLShift, BitRShift, BitUnsignedRShift, BitAnd, BitXor, BitOr)
+    val op = Gen.oneOf[(Expression, Expression) => BinaryOp](Multiply, Divide, Modulus, Minus, Plus, Equal, NotEqual,
+      And, Or, Greater, GreaterOrEqual, Lesser, LesserOrEqual, BitLShift, BitRShift, BitUnsignedRShift, BitAnd,
+      BitXor, BitOr)
     for (o <- op; lhs <- expression; rhs <- expression) yield o(lhs, rhs)
   }
 
   def unaryOp(implicit depth: ExprDepth): Gen[UnaryOp] = {
-    val op = Gen.oneOf[Expression => UnaryOp](Not, UnaryMinus)
+    val op = Gen.oneOf[Expression => UnaryOp](Not, UnaryMinus, BitNot)
     for (o <- op; e <- expression) yield o(e)
   }
 

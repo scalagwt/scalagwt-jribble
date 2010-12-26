@@ -216,7 +216,8 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     lazy val expr2: PackratParser[Expression] = {
       lazy val not: PackratParser[Not] = "!" ~> expr2 ^^ Not
       lazy val minus: PackratParser[Expression] = "-" ~> expr2 ^^ UnaryMinus
-      not | minus | expr1
+      lazy val bitNot: PackratParser[BitNot] = "~" ~> expr2 ^^ BitNot
+      not | minus | bitNot | expr1
     }
 
     lazy val expr3 = newCall | newRef | expr2
@@ -234,7 +235,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
       opsAlternative | higherPrec
     }
     lazy val expr4: PackratParser[Expression] = leftBinaryOps(expr4, expr3)("*" -> Multiply, "/" -> Divide)
-    lazy val expr5: PackratParser[Expression] = leftBinaryOps(expr5, expr4)("+" -> Plus, "-" -> Minus)
+    lazy val expr5: PackratParser[Expression] = leftBinaryOps(expr5, expr4)("+" -> Plus, "-" -> Minus, "%" -> Modulus)
     lazy val expr6: PackratParser[Expression] = leftBinaryOps(expr6, expr5)(
       "<<" -> BitLShift, ">>" -> BitRShift, ">>>" -> BitUnsignedRShift)
     lazy val expr7: PackratParser[Expression] = leftBinaryOps(expr7, expr6)(
@@ -310,5 +311,5 @@ object Parsers {
                       "protected", "throw")
   val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "]", "::", ".", ",", "=",
                         "<", ">", "==", "!=", "+", "-", "*", "&&", "||", ">", ">=", "<", "<=",
-                        "!", "<<", ">>", ">>>", "&", "^", "|")
+                        "!", "<<", ">>", ">>>", "&", "^", "|", "%", "~")
 }
