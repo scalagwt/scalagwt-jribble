@@ -103,6 +103,8 @@ object Generators {
   def cast(implicit depth: ExprDepth): Gen[Cast] =
     for (on <- expression if isDotTarget(on); t <- typ) yield Cast(on, t)
 
+  def clazzOf: Gen[ClassOf] = for (r <- ref) yield ClassOf(r)
+
   def arrayInitializer(implicit depth: ExprDepth): Gen[ArrayInitializer] =
     for (t <- typ; elements <- Gen.resize(3,Gen.listOf(expression))) yield ArrayInitializer(t, elements)
 
@@ -136,7 +138,7 @@ object Generators {
 
   def expression(implicit depth: ExprDepth): Gen[Expression] = {
     val nonRecursive = Gen.frequency((5, literal), (1, varRef), (1, Gen.value(ThisRef)), (1, staticFieldRef),
-      (1, Gen.value(SuperRef)))
+      (1, Gen.value(SuperRef)), (1, clazzOf))
     val newDepth = depth.map(_+1)
     val recursive = Gen.oneOf(Gen.lzy(newCall(newDepth)), Gen.lzy(methodCall(newDepth)),
       Gen.lzy(staticMethodCall(newDepth)), Gen.lzy(conditional(newDepth)), Gen.lzy(instanceOf(newDepth)),

@@ -121,6 +121,10 @@ trait Printers {
     def apply(x: Cast) = NestedExpressionPrinter(x.precedence, x.on) + "." + "<cast>" + "(" + TypePrinter(x.typ) + ")"
   }
 
+  implicit object ClassOfPrinter extends Printer[ClassOf] {
+    def apply(x: ClassOf) = RefPrinter(x.ref) + ".class"
+  }
+
   implicit object ArrayInitializerPrinter extends Printer[ArrayInitializer] {
     def apply(x: ArrayInitializer) =
       "<" + TypePrinter(x.typ) + ">" + x.elements.map(ExpressionPrinter).mkString("{", ", ", "}")
@@ -183,6 +187,7 @@ trait Printers {
         case x: Conditional => ConditionalPrinter(x)
         case x: InstanceOf => InstanceOfPrinter(x)
         case x: Cast => CastPrinter(x)
+        case x: ClassOf => ClassOfPrinter(x)
         case x: ArrayInitializer => ArrayInitializerPrinter(x)
         case x: FieldRef => FieldRefPrinter(x)
         case x: StaticFieldRef => StaticFieldRefPrinter(x)

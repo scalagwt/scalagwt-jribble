@@ -178,6 +178,7 @@ object Shrinkers {
       shrink(x) append
       shrink(on)
     case x: StaticFieldRef => shrink(x)
+    case x: ClassOf => shrink(x)
     case x: BinaryOp =>
       shrink(x) append
       shrink(x.lhs) append

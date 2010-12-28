@@ -192,6 +192,8 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
   val staticFieldRef: Parser[StaticFieldRef] = (ref <~ ".") ~ name ^^ StaticFieldRef
   val staticCall: Parser[StaticMethodCall] = (ref ~ ("." ~> methodSignature) ~! params) ^^ StaticMethodCall
 
+  val clazzOf: Parser[ClassOf] = ref <~ ("." ~ "class") ^^ ClassOf
+
   val newCall: Parser[NewCall] = ("new" ~> constructorCall("this")) ^^ NewCall
 
   val newRef: Parser[NewArray] = ("new" ~> (primitive | ref)) ~ rep1("[" ~> opt(expression) <~ "]") ^^ NewArray
@@ -209,11 +211,11 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
     lazy val instanceOf: PackratParser[InstanceOf] = expr1 ~
           ("." ~> "<" ~> "instanceof" ~> ">" ~> ("(" ~> typ <~ ")")) ^^ InstanceOf
     lazy val cast: PackratParser[Cast] = expr1 ~ ("." ~> "<" ~> "cast" ~> ">" ~> ("(" ~> typ <~ ")")) ^^ Cast
-    lazy val fieldRef: PackratParser[FieldRef] = (expr1 <~ ".") ~ ("(" ~> ref <~ ")") ~ name ^^ FieldRef
+    lazy val fieldRef: PackratParser[FieldRef] = (expr1 <~ ".") ~ ("(" ~> typ <~ ")") ~ name ^^ FieldRef
     lazy val arrayRef: PackratParser[ArrayRef] = expr1 ~ ("[" ~> expression <~ "]") ^^ ArrayRef
     lazy val arrayLength: PackratParser[ArrayLength] = expr1 <~ ("." ~ "<" ~ Identifier("length") ~ ">") ^^ ArrayLength
     lazy val expr1: PackratParser[Expression] =
-      (methodCall | instanceOf | cast | fieldRef | arrayRef | arrayLength | staticCall | staticFieldRef |
+      (methodCall | instanceOf | cast | fieldRef | arrayRef | arrayLength | staticCall | staticFieldRef | clazzOf |
        thisRef | superRef | varRef | literal | arrayInitializer | ("(" ~> expr15 <~ ")"))
     lazy val expr2: PackratParser[Expression] = {
       lazy val not: PackratParser[Not] = "!" ~> expr2 ^^ Not
