@@ -25,7 +25,7 @@ class ParseScalaLibraryJribble {
   @Test
   def tryToParseAllFiles {
     val time1 = System.currentTimeMillis
-    val parsed = mapJribbleFiles((s, in ) => defParser.parse(in)).toList
+    val parsed = mapJribbleFiles((s, in ) => defParser.parse(in, s)).toList
     val successful = (parsed collect { case (name, Left(node)) => (name, node) }).toList
     val failed = (parsed collect { case (name, Right(msg)) => (name, msg) }).toList
     val time2 = System.currentTimeMillis

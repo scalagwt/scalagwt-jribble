@@ -25,9 +25,10 @@ class DefParser {
   }
   import parsers._
 
-  def parse(in: java.io.Reader): Either[ast.DeclaredType, String] = parsers.parse(phrase(defParser), in) match {
-    case Success(x, _) => Left(x)
-    case x => Right("Could not parse the input " + x)
-  }
+  def parse(in: java.io.Reader, name: String): Either[ast.DeclaredType, String] =
+    parsers.parse(phrase(defParser), in) match {
+      case Success(x, _) => Left(x)
+      case x => Right("Could not parse the input " + x)
+    }
 
 }
