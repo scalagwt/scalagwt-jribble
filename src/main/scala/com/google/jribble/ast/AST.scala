@@ -18,7 +18,7 @@ package com.google.jribble.ast
 import scala.collection.JavaConversions._
 import java.util.{List => JList}
 
-sealed abstract class AST
+sealed abstract class AST extends java.io.Serializable
 
 sealed abstract class DeclaredType {
   def name: Ref
