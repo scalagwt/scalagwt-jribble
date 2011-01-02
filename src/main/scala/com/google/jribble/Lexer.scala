@@ -21,7 +21,7 @@ class Lexer extends StdLexical with JribbleTokens {
     | '\'' ~ '\\' ~ rep1(digit) ~ '\''                  ^^ { case '\'' ~ '\\' ~ digits ~ '\'' =>
       CharLit(Integer.decode(digits mkString "").intValue.asInstanceOf[Char])
     }
-    | '\'' ~ chrExcept('\'', '\n', EofCh) ~ '\''        ^^ { case '\'' ~ char ~ '\'' => CharLit(char) }
+    | '\'' ~ escapedChar ~ '\''   ^^ { case '\'' ~ char ~ '\'' => CharLit(char) }
     | '\"' ~ escapedString ~ '\"' ^^ { case '\"' ~ chars ~ '\"' => StringLit(chars mkString "") }
     | EofCh                                             ^^^ EOF
     | '\'' ~> failure("unclosed string literal")
@@ -31,16 +31,23 @@ class Lexer extends StdLexical with JribbleTokens {
     | failure("illegal character")
     )
 
-  private val escapedString = {
-    val escapes = Map('b' -> "\b", 't' -> "\t", 'n' -> "\n", 'f' -> "\f",
-          'r' -> "\r", '"' -> "\"", '\'' -> "\'", '\\' -> "\\")
-    val escaped = '\\' ~> elem("escaped code", _ => true) ^? escapes
-    val octal = '\\' ~> '0' ~ digit ~ digit ^^ {
+  private val escapingCodeChar: Parser[Char] = {
+    val escapes = Map('b' -> '\b', 't' -> '\t', 'n' -> '\n', 'f' -> '\f',
+          'r' -> '\r', '"' -> '\"', '\'' -> '\'', '\\' -> '\\')
+    '\\' ~> elem("escaped code", _ => true) ^? escapes
+  }
+
+  private val escapingOctalChar: Parser[Char] =
+    '\\' ~> '0' ~ digit ~ digit ^^ {
       case zero ~ digit1 ~ digit2 =>
         Integer.decode(zero.toString + digit1.toString + digit2.toString).intValue.asInstanceOf[Char]
     }
-    rep(escaped | octal | chrExcept('\"', '\n', EofCh, '\\'))
-  }
+
+  private val escapedString: Parser[List[Char]] =
+    rep(escapingCodeChar | escapingOctalChar | chrExcept('\"', '\n', EofCh, '\\'))
+
+  private val escapedChar: Parser[Char] =
+    escapingCodeChar | escapingOctalChar | chrExcept('\'', '\n', EofCh, '\\')
 
   private val integer = opt('-') ~ rep1(digit) ^^ {
     case minus ~ digits => minus.toList ::: digits mkString ""
