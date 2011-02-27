@@ -18,9 +18,10 @@ package com.google.jribble
 import org.junit.Test
 import org.junit.Assert._
 import java.util.jar._
+import java.io.{Reader, InputStreamReader, InputStream}
 
 class ParseScalaLibraryJribble {
-  val defParser = new DefParser()
+  val defParser = new DefParser with CachingDefParser
 
   @Test
   def tryToParseAllFiles {
@@ -51,7 +52,7 @@ class ParseScalaLibraryJribble {
     } filter (_.getName endsWith ".jribble")).toList//.filter (_.getName == "scala/Array$.jribble")
     println("Found %1d jribble files.".format(jribbleFiles.size))
     jribbleFiles.toIterator map { jarEntry =>
-      val reader = new java.io.InputStreamReader(jarFile.getInputStream(jarEntry))
+      val reader = new ResettableInputStreamReader(jarFile.getInputStream(jarEntry))
       val name = jarEntry.getName
       val result = f(name, reader)
       reader.close()
@@ -65,5 +66,19 @@ class ParseScalaLibraryJribble {
     import java.io.File
     val file = new File(new File(userDirectory, "lib_test"), scalaLibraryJribbleName)
     new JarFile(file)
+  }
+
+  /**
+   * Reader that reads characters from InputStream and can be resetted by
+   * re-evaluating InputStream parameter.
+   */
+  private final class ResettableInputStreamReader(in: => InputStream) extends Reader {
+    private var reader: Reader = _
+    reset()
+    override def reset() = {
+      reader = new InputStreamReader(in)
+    }
+    def close() = reader.close()
+    def read(cbuf: Array[Char], off: Int, len: Int) = reader.read(cbuf, off, len)
   }
 }

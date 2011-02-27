@@ -2,6 +2,7 @@ package com.google.jribble
 
 import ast.DeclaredType
 import java.io.File
+import java.math.BigInteger
 
 trait CachingDefParser extends DefParser {
 
@@ -9,7 +10,12 @@ trait CachingDefParser extends DefParser {
   println("Caching folder is %1s".format(cacheDir.toString))
 
   override def parse(in: java.io.Reader, name: String): Either[DeclaredType, String] = {
-    val file = new File(cacheDir, name + ".bin")
+    val hash = {
+      val r = md5(in)
+      in.reset()
+      r
+    }
+    val file = new File(cacheDir, String.format("%1s-%2s.bin", name, hash))
     if (file.exists) {
       println("Reading %1s from cache".format(name))
       val ois  = new java.io.ObjectInputStream(new java.io.FileInputStream(file))
@@ -29,6 +35,25 @@ trait CachingDefParser extends DefParser {
         case x => x
       }
     }
+  }
+
+  private def md5(in: java.io.Reader): String = {
+    val m = java.security.MessageDigest.getInstance("MD5")
+    val data = read(in).getBytes
+    m.update(data, 0, data.length)
+    val i = new BigInteger(1,m.digest())
+    String.format("%1$032X", i)
+  }
+
+  private def read(in: java.io.Reader): String = {
+    val arr = new Array[Char](8*1024) //8K at a time
+    val buf = new StringBuffer();
+    var n: Int = 0
+
+    while ({n = in.read(arr, 0, arr.length); n} > 0)
+      buf.append(arr, 0, n);
+
+    buf.toString();
   }
 
 }
