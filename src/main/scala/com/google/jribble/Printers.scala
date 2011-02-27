@@ -77,6 +77,7 @@ trait Printers {
       case LongLiteral(v) => v.toString + "L"
       case FloatLiteral(v) => v.toString + "F"
       case DoubleLiteral(v) => v.toString + "D"
+      case NullLiteral => "null"
       case _ => error("to be implemented")
     }
   }

@@ -68,7 +68,7 @@ object Generators {
     val longLiteral = for (x <- arbitrary[Long]) yield LongLiteral(x)
     val floatLiteral = for (x <- arbitrary[Float]) yield FloatLiteral(x)
     val doubleLiteral = for (x <- arbitrary[Double]) yield DoubleLiteral(x)
-    stringLiteral | charLiteral | booleanLiteral | intLiteral | longLiteral | floatLiteral | doubleLiteral
+    stringLiteral | charLiteral | booleanLiteral | intLiteral | longLiteral | floatLiteral | doubleLiteral | NullLiteral
   }
   def varRef = identifier.map(VarRef)
   def signature(name: Gen[String]): Gen[Signature] = for {

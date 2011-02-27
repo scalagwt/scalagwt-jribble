@@ -291,7 +291,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
       accept("double literal", {
         case lexical.FloatingPointLit(x) if x endsWith "D" => DoubleLiteral(x.take(x.size-1).toDouble)
       })
-    bool | char | (stringLit ^^ StringLiteral) | long | float | double | int
+    bool | char | (stringLit ^^ StringLiteral) | long | float | double | int | ("null" ^^^ NullLiteral)
   }
 
   /** Parse some prefix of reader `in' with parser `p' */
@@ -317,7 +317,7 @@ object Parsers {
                       "new", "false", "true", "if", "else", "instanceof",
                       "cast", "private", "try", "catch", "finally", "while",
                       "continue", "break", "switch", "default", "return",
-                      "protected", "throw")
+                      "protected", "throw", "null")
   val delimiters = List("{", "}", ":", ";", "/", "(", ")", "?", "[", "]", "::", ".", ",", "=",
                         "<", ">", "==", "!=", "+", "-", "*", "&&", "||", ">", ">=", "<", "<=",
                         "!", "<<", ">>", ">>>", "&", "^", "|", "%", "~")
