@@ -192,7 +192,7 @@ trait Parsers extends StdTokenParsers with PackratParsers with ImplicitConversio
   val staticFieldRef: Parser[StaticFieldRef] = (ref <~ ".") ~ name ^^ StaticFieldRef
   val staticCall: Parser[StaticMethodCall] = (ref ~ ("." ~> methodSignature) ~! params) ^^ StaticMethodCall
 
-  val clazzOf: Parser[ClassOf] = ref <~ ("." ~ "class") ^^ ClassOf
+  val clazzOf: Parser[ClassOf] = (VoidType | typ) <~ ("." ~ "class") ^^ ClassOf
 
   val newCall: Parser[NewCall] = ("new" ~> constructorCall("this")) ^^ NewCall
 

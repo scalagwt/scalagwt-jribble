@@ -123,7 +123,7 @@ trait Printers {
   }
 
   implicit object ClassOfPrinter extends Printer[ClassOf] {
-    def apply(x: ClassOf) = RefPrinter(x.ref) + ".class"
+    def apply(x: ClassOf) = TypePrinter(x.typ) + ".class"
   }
 
   implicit object ArrayInitializerPrinter extends Printer[ArrayInitializer] {

@@ -103,7 +103,7 @@ object Generators {
   def cast(implicit depth: ExprDepth): Gen[Cast] =
     for (on <- expression if isDotTarget(on); t <- typ) yield Cast(on, t)
 
-  def clazzOf: Gen[ClassOf] = for (r <- ref) yield ClassOf(r)
+  def clazzOf: Gen[ClassOf] = for (t <- typ) yield ClassOf(t)
 
   def arrayInitializer(implicit depth: ExprDepth): Gen[ArrayInitializer] =
     for (t <- typ; elements <- Gen.resize(3,Gen.listOf(expression))) yield ArrayInitializer(t, elements)
