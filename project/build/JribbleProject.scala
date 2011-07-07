@@ -18,7 +18,7 @@ import sbt._
 
 class JribbleProject(info: ProjectInfo) extends DefaultProject(info) with IdeaProject {
   //val scalaTools = "scala-tools-snapshots" at "http://scala-tools.org/repo-snapshots"
-  val scalaCheck = "org.scala-tools.testing" % "scalacheck_2.8.1" % "1.8" % "test" withSources()
+  val scalaCheck = "org.scala-tools.testing" % "scalacheck_2.9.0" % "1.9" % "test" withSources()
 
   val junit = "junit" % "junit" % "4.8.1" % "test"
   val bryanjswift = "Bryan J Swift Repository" at "http://repos.bryanjswift.com/maven2/"
