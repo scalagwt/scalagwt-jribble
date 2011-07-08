@@ -17,16 +17,16 @@ trait CachingDefParser extends DefParser {
     }
     val file = new File(cacheDir, String.format("%1s-%2s.bin", name, hash))
     if (file.exists) {
-      println("Reading %1s from cache".format(name))
       val ois  = new java.io.ObjectInputStream(new java.io.FileInputStream(file))
       val r = ois.readObject.asInstanceOf[ast.DeclaredType]
       ois.close()
       Left(r)
     } else {
-      file.getParentFile.mkdirs()
-      file.createNewFile()
+      println("Parsing %1s ...".format(name))
       super.parse(in, name) match {
         case x@Left(r) => {
+          file.getParentFile.mkdirs()
+          file.createNewFile()
           val oss  = new java.io.ObjectOutputStream(new java.io.FileOutputStream(file))
           oss.writeObject(r)
           oss.close()
