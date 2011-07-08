@@ -15,8 +15,9 @@
  */
 
 import sbt._
+import de.element34.sbteclipsify._
 
-class JribbleProject(info: ProjectInfo) extends DefaultProject(info) with IdeaProject {
+class JribbleProject(info: ProjectInfo) extends DefaultProject(info) with IdeaProject with Eclipsify {
   //val scalaTools = "scala-tools-snapshots" at "http://scala-tools.org/repo-snapshots"
   val scalaCheck = "org.scala-tools.testing" % "scalacheck_2.9.0" % "1.9" % "test" withSources()
 
