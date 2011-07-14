@@ -1,6 +1,6 @@
 package com.google.jribble
 
-import fork.combinator.token.StdTokens
+import scala.util.parsing.combinator.token.StdTokens
 
 trait JribbleTokens extends StdTokens {
 
