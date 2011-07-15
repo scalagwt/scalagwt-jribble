@@ -69,8 +69,6 @@ case class Block(statements: List[Statement]) extends Statement {
 
 case class VarDef(typ: Type, name: String, value: Option[Expression]) extends Statement
 case class Assignment(lhs: Expression, rhs: Expression) extends Statement
-//TODO(grek): by using Block[MethodStatement] we are making it impossible to call super constructors from
-//blocks in if statements. Not sure if this is important.
 case class If(condition: Expression, then: Block, elsee: Option[Block]) extends Statement
 
 case class Try(block: Block, catches: List[(Ref, String, Block)], finalizer: Option[Block]) extends Statement {
