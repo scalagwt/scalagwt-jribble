@@ -19,4 +19,4 @@ or on Mac:
 
 then type 'sbt' and you should see sbt's console.  Useful commands are 'compile' and 'test'.
 
-For more information consult sbt's homepage: http://code.google.com/p/simple-build-tool/
+For more information consult sbt's homepage: https://github.com/harrah/xsbt/wiki
